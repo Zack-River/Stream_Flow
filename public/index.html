@@ -1,50 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Document</title>
-  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="users">
 
-    </div>
-    <button onclick=""> Create User</button>
-  </div>
-  <script>
-    async function loadUsers() {
-      const response = await fetch('http://localhost:3000/users');
+  
 
-      if (!response.ok) {
-        document.getElementsByClassName('container')[0].innerHTML = `
-          <h1 class="error">Failed to fetch users</h1>
-        `;
-        return;
-      }
-
-      const users = await response.json();
-
-      if (users.length === 0) {
-        document.getElementsByClassName('users')[0].innerHTML = `
-          <h1 class="error">No Users To Show</h1>
-        `;
-      } else {
-        document.getElementsByClassName('users')[0].innerHTML = users.map(
-          user => `
-            <div class="user">
-                <h1 draggable="true">${user.name}</h1>
-                <h2 draggable="true">Username: <span>${user.username}</span></h2>
-                <h2 draggable="true">Role: <span>${user.role}</span></h2>
-                <h2 draggable="true">Phone: <span>${user.phone}</span></h2>
-            </div>
-          `
-        ).join('');
-      }
-    }
-
-    loadUsers();
-  </script>
 </body>
 </html>
