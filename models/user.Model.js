@@ -17,6 +17,7 @@ const userShcema = new mongoose.Schema({
         required: [true,"Email required!"],
         unique: [true,"Email must be Unique!"],
         lowercase: true,
+        trim: true,
         select: false
     },
     phone: {

@@ -6,7 +6,7 @@ const cookieHelper = require('../utils/cookie');
 
 exports.register = async function (req, res) {
   try {
-    const { name, username, email, password } = req.body;
+    const { name, username, email, password, role } = req.body;
 
     if (!name || !username || !email || !password) {
       return res.status(400).json({ message: "All fields are required!" });
@@ -29,7 +29,12 @@ exports.register = async function (req, res) {
       username,
       email: normalizedEmail,
       password: hashedPassword,
+      role: role && ["user", "admin"].includes(role) ? role : undefined
     });
+
+    if (req.file) {
+      newUser.profileImg = `/uploads/profiles/${req.file.filename}`;
+    }
 
     await newUser.save();
 
@@ -40,6 +45,8 @@ exports.register = async function (req, res) {
         name: newUser.name,
         username: newUser.username,
         email: newUser.email,
+        role: newUser.role,
+        profileImg: newUser.profileImg,
         createdAt: newUser.createdAt,
       },
     });
@@ -184,7 +191,7 @@ exports.resetPassword = async function (req, res) {
 };
 
 exports.refreshAccessToken = async function (req, res) {
-  const token = req.cookies.refreshToken || req.body.refreshToken;
+  const token = req.cookies.refreshToken;
   if (!token) return res.status(401).json({ message: "No refresh token!" });
 
   try {
@@ -201,30 +208,6 @@ exports.refreshAccessToken = async function (req, res) {
   } catch (err) {
     console.error(err);
     res.status(403).json({ message: "Invalid or expired refresh token!" });
-  }
-};
-
-exports.showProfile = function (req, res) {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Not authenticated!' });
-    }
-
-    res.status(200).json({
-      message: 'User profile fetched successfully.',
-      user: {
-        id: req.user._id,
-        name: req.user.name,
-        username: req.user.username,
-        email: req.user.email,
-        role: req.user.role,
-        createdAt: req.user.createdAt,
-        lastLogin: req.user.lastLogin,
-      }
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Something went wrong while fetching profile.' });
   }
 };
 
