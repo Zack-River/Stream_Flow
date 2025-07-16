@@ -1,148 +1,176 @@
-const path = require("path");
-const fs = require("fs");
-const Audio = require("../models/audio.Models");
+const path = require('path');
+const fs = require('fs');
+const Audio = require('../models/audio.Model');
 
-// 1. POST /api/audio
-const uploadAudio = async (req, res) => {
+// === Upload Audio ===
+exports.uploadAudio = async (req, res, next) => {
   try {
-    const { title, genre, isPrivate } = req.body;
+    const { title, genre, isPrivate, singer } = req.body;
 
-    if (!req.files || !req.files.audio || !req.files.cover) {
-      return res.status(400).json({ message: "Audio and cover image are required." });
+    if (!req.files?.audio?.length || !req.files?.cover?.length) {
+      return res.status(400).json({ message: 'Audio and cover image are required.' });
+    }
+
+    if (!title || !genre) {
+      return res.status(400).json({ message: 'Title and genre are required.' });
+    }
+
+    if (!singer || !Array.isArray(JSON.parse(singer)) || JSON.parse(singer).length === 0) {
+      return res.status(400).json({ message: 'At least one singer is required.' });
     }
 
     const audioFile = req.files.audio[0];
     const coverFile = req.files.cover[0];
 
-    const newAudio = new Audio({
-      title,
-      genre,
-      isPrivate: isPrivate === "true",
-      audioUrl: `/uploads/${audioFile.filename}`,
-      coverImageUrl: `/uploads/${coverFile.filename}`,
+    const audio = new Audio({
+      title: title.trim(),
+      genre: genre.trim(),
+      isPrivate: isPrivate === 'true',
+      singer: JSON.parse(singer),
+      audioUrl: `/uploads/audio/${audioFile.filename}`,
+      coverImageUrl: `/uploads/audio/${coverFile.filename}`,
       uploadedBy: req.user._id,
     });
 
-    await newAudio.save();
-    res.status(201).json({ message: "Audio uploaded successfully.", audio: newAudio });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error while uploading audio." });
+    await audio.save();
+    res.status(201).json({ message: 'Audio uploaded successfully.', audio });
+  } catch (err) {
+    next(err);
   }
 };
 
-// 2. GET /api/audio
-const getPublicAudios = async (req, res) => {
+// === Get Public Audios ===
+exports.getPublicAudios = async (req, res, next) => {
   try {
-    const audios = await Audio.find({ isPrivate: false }).populate("uploadedBy", "name email");
-    res.json(audios);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to fetch public audios." });
+    const audios = await Audio.find({ isPrivate: false }).populate('uploadedBy', 'name email');
+    res.json({ count: audios.length, audios });
+  } catch (err) {
+    next(err);
   }
 };
 
-// 3. GET /api/audio/mine
-const getMyAudios = async (req, res) => {
+// === Get My Audios ===
+exports.getMyAudios = async (req, res, next) => {
   try {
     const audios = await Audio.find({ uploadedBy: req.user._id });
-    res.json(audios);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to fetch your audios." });
+    res.json({ count: audios.length, audios });
+  } catch (err) {
+    next(err);
   }
 };
 
-// 4. GET /api/audio/stream/:id
-const streamAudio = async (req, res) => {
+// === Stream Audio ===
+exports.streamAudio = async (req, res, next) => {
   try {
     const audio = await Audio.findById(req.params.id);
-    if (!audio) return res.status(404).json({ message: "Audio not found." });
+    if (!audio) return res.status(404).json({ message: 'Audio not found.' });
 
-    const filePath = path.join(__dirname, "..", audio.audioUrl);
+    const filePath = path.join(__dirname, '..', audio.audioUrl);
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: 'Audio file missing on server.' });
+    }
+
     const stat = fs.statSync(filePath);
-    const fileSize = stat.size;
     const range = req.headers.range;
 
     if (range) {
-      const parts = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-      const chunkSize = end - start + 1;
-      const stream = fs.createReadStream(filePath, { start, end });
+      const [startStr, endStr] = range.replace(/bytes=/, '').split('-');
+      const start = parseInt(startStr, 10);
+      const end = endStr ? parseInt(endStr, 10) : stat.size - 1;
+
+      if (start >= stat.size) {
+        return res.status(416).send('Requested range not satisfiable\n' + start + ' >= ' + stat.size);
+      }
+
+      const chunkSize = (end - start) + 1;
 
       res.writeHead(206, {
-        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
-        "Accept-Ranges": "bytes",
-        "Content-Length": chunkSize,
-        "Content-Type": "audio/mpeg",
+        'Content-Range': `bytes ${start}-${end}/${stat.size}`,
+        'Accept-Ranges': 'bytes',
+        'Content-Length': chunkSize,
+        'Content-Type': 'audio/mpeg',
       });
 
-      stream.pipe(res);
+      fs.createReadStream(filePath, { start, end }).pipe(res);
     } else {
       res.writeHead(200, {
-        "Content-Length": fileSize,
-        "Content-Type": "audio/mpeg",
+        'Content-Length': stat.size,
+        'Content-Type': 'audio/mpeg',
       });
       fs.createReadStream(filePath).pipe(res);
     }
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error streaming audio." });
+  } catch (err) {
+    next(err);
   }
 };
 
-// 5. PUT /api/audio/:id
-const updateAudio = async (req, res) => {
+// === Update Audio ===
+exports.updateAudio = async (req, res, next) => {
   try {
     const audio = await Audio.findById(req.params.id);
-    if (!audio) return res.status(404).json({ message: "Audio not found." });
-
+    if (!audio) return res.status(404).json({ message: 'Audio not found.' });
     if (audio.uploadedBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "You can only update your own audios." });
+      return res.status(403).json({ message: 'Forbidden. Not your audio.' });
     }
 
-    const { title, genre, isPrivate } = req.body;
-    if (title) audio.title = title;
-    if (genre) audio.genre = genre;
-    if (isPrivate !== undefined) audio.isPrivate = isPrivate === "true";
+    const { title, genre, isPrivate, singer } = req.body;
+    if (title) audio.title = title.trim();
+    if (genre) audio.genre = genre.trim();
+    if (isPrivate !== undefined) audio.isPrivate = isPrivate === 'true';
+    if (singer) {
+      const singers = JSON.parse(singer);
+      if (Array.isArray(singers) && singers.length > 0) {
+        audio.singer = singers;
+      }
+    }
 
-    if (req.files && req.files.cover) {
-      const coverFile = req.files.cover[0];
-      audio.coverImageUrl = `/uploads/${coverFile.filename}`;
+    if (req.files?.cover?.length) {
+      audio.coverImageUrl = `/uploads/audio/${req.files.cover[0].filename}`;
     }
 
     await audio.save();
-    res.json({ message: "Audio updated successfully.", audio });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to update audio." });
+    res.json({ message: 'Audio updated.', audio });
+  } catch (err) {
+    next(err);
   }
 };
 
-// 6. DELETE /api/audio/:id
-const deleteAudio = async (req, res) => {
+// === Delete Audio ===
+exports.deleteAudio = async (req, res, next) => {
   try {
     const audio = await Audio.findById(req.params.id);
-    if (!audio) return res.status(404).json({ message: "Audio not found." });
-
+    if (!audio) return res.status(404).json({ message: 'Audio not found.' });
     if (audio.uploadedBy.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "You can only delete your own audios." });
+      return res.status(403).json({ message: 'Forbidden. Not your audio.' });
     }
 
     await audio.deleteOne();
-    res.json({ message: "Audio deleted successfully." });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to delete audio." });
+    res.json({ message: 'Audio deleted.' });
+  } catch (err) {
+    next(err);
   }
 };
 
-module.exports = {
-  uploadAudio,
-  getPublicAudios,
-  getMyAudios,
-  streamAudio,
-  updateAudio,
-  deleteAudio,
+// === Admin Delete Audio ===
+exports.adminDeleteAudio = async (req, res, next) => {
+  try {
+    const audio = await Audio.findById(req.params.id);
+    if (!audio) return res.status(404).json({ message: 'Audio not found.' });
+
+    await audio.deleteOne();
+    res.json({ message: 'Audio deleted by admin.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// === Admin Get All Audios ===
+exports.adminGetAllAudios = async (req, res, next) => {
+  try {
+    const audios = await Audio.find().populate('uploadedBy', 'name email');
+    res.json({ count: audios.length, audios });
+  } catch (err) {
+    next(err);
+  }
 };
