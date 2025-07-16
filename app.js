@@ -14,7 +14,7 @@ app.use(cookieParser());
 app.use(express.static('public'));
 app.use(express.static('uploads'));
 app.use(userRouter);
-
+app.use("/api/audio", audioRoutes);
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
