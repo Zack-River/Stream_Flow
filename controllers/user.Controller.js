@@ -34,15 +34,10 @@ exports.getUser = async function (req, res) {
 
 exports.createUser = async function (req, res) {
   try {
-    const { name, username: requestusername, email, phone, password } = req.body;
-    let username = requestusername;
+    const { name, username , email, phone, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "Name, Email, and Password are required!" });
-    }
-
-    if (!username) {
-      username = usernameify(name);
+    if (!name || !email || !password || !username ) {
+      return res.status(400).json({ message: "Name, Username , Email, and Password are required!" });
     }
 
     const normalizedEmail = email.toLowerCase();

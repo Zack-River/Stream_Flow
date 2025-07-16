@@ -7,6 +7,9 @@ const {checkAuthenticated , authorizeRoles} = require('../middlewares/auth.Middl
 // admin routes
 router.get('/admin/users' , checkAuthenticated, authorizeRoles('admin'), userController.getUsers);
 router.post('/admin/user' , checkAuthenticated, authorizeRoles('admin'), userController.createUser);
+router.get('/admin/users/:username' , checkAuthenticated, authorizeRoles('admin'), userController.getUser);
+router.put('/admin/users/:username' , checkAuthenticated, authorizeRoles('admin'), userController.updateUser);
+router.delete('/admin/users/:username' , checkAuthenticated, authorizeRoles('admin'), userController.deleteUser);
 
 // user routes
 router.post('/register', authController.register);

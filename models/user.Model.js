@@ -4,6 +4,7 @@ const userShcema = new mongoose.Schema({
     name: {
         type: String,
         trim: true,
+        minlength: [2,"Name must be more than 2 letters!"],
         required: [true,"Name required!"],
     },
     username: {
