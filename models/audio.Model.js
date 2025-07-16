@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const User = require("../models/user.Model")
+const User = require("./user.Model")
 const audioSchema = new mongoose.Schema({
   title: {
     type: String,

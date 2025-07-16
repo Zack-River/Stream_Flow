@@ -1,6 +1,6 @@
 const path = require("path");
 const fs = require("fs");
-const Audio = require("../models/addio.Models"); // تأكد من اسم الملف الصحيح
+const Audio = require("../models/audio.Models");
 
 // 1. POST /api/audio
 const uploadAudio = async (req, res) => {
