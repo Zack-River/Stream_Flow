@@ -18,7 +18,7 @@ exports.registerValidator = [
     .length({ min: 6, max: 20 }).withMessage('Password must be between 6 and 20 characters')
     .notEmpty().withMessage('Password is required')
     .isString().withMessage('Password must be a string')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/)
+    .matches(/^(?=.*    [a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
 ];
 
