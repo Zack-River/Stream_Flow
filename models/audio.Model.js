@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const User = require("./user.Model")
+
 const audioSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -22,6 +22,16 @@ const audioSchema = new mongoose.Schema({
   isPrivate: {
     type: Boolean,
     default: false
+  },
+  singer: {
+    type: [String],
+    required: true,
+    validate: {
+      validator: function(arr) {
+        return arr.length > 0;
+      },
+      message: 'At least one singer is required.'
+    }
   },
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
