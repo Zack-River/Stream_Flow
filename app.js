@@ -2,7 +2,9 @@ const express = require('express');
 const { query, validationResult, matchedData } = require('express-validator');
 const connectDB = require('./config/db');
 const path = require('path');
-const userRouter = require('./routes/user.Routes.js');
+const adminRoutes = require('./routes/admin.Routes.js');
+const userRoutes = require('./routes/user.Routes.js');
+const audioRoutes = require('./routes/audio.Routes.js');
 const cookieParser = require('cookie-parser');
 connectDB();
 
@@ -13,7 +15,9 @@ app.use(express.urlencoded({extended:true}));
 app.use(cookieParser());
 app.use(express.static('public'));
 app.use(express.static('uploads'));
-app.use(userRouter);
+app.use(userRoutes);
+app.use(adminRoutes);
+app.use(audioRoutes);
 
 
 app.get('/', (req, res) => {
