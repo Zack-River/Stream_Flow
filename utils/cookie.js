@@ -25,9 +25,10 @@ exports.clearAuthCookies = function (res) {
 };
 
 function createCookie(res, name, token, maxAge) {
+  const isProduction = process.env.NODE_ENV === 'production'
   res.cookie(name, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Only HTTPS in prod
+    secure: isProduction, // Only HTTPS in prod
     sameSite: 'strict',          // Prevent CSRF
     maxAge: maxAge,
     path: '/',                   // Available to entire app
@@ -35,9 +36,10 @@ function createCookie(res, name, token, maxAge) {
 }
 
 function removeCookie(res, name) {
+  const isProduction = process.env.NODE_ENV === 'production'
   res.clearCookie(name, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     sameSite: 'strict',
     path: '/',
   });

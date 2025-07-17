@@ -1,0 +1,151 @@
+:root {
+  --color-bg: #121212;              /* Deep dark background */
+  --color-surface: rgba(255, 255, 255, 0.05);  /* Card/Form background */
+  --primary-start: #ff0080;         /* Cyber Pink gradient start */
+  --primary-end: #7928ca;           /* Cyber Purple gradient end */
+  --accent: #ff66b2;                /* Lighter pink for links & hover */
+  --text-base: #ffffff;             /* Main text */
+  --text-secondary: #cccccc;        /* Subtle text */
+  --shadow-neon-1: #ff0080;         /* Neon glow 1 */
+  --shadow-neon-2: #7928ca;         /* Neon glow 2 */
+}
+
+body {
+  background: var(--color-bg);
+  height: 100vh;
+  margin: 0;
+  font-size: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-base);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.container h1 {
+  background: linear-gradient(135deg, #ff66b2, #da2cff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 20px;
+}
+
+.form {
+  min-width: 300px;
+  width: fit-content;
+  padding: 30px;
+  background: var(--color-surface);
+  border-radius: 25px;
+  box-shadow: 0 0 20px var(--shadow-neon-1), 0 0 40px var(--shadow-neon-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+
+  /* Hide by default for toggle */
+  opacity: 0;
+  transform: translateX(50px);
+  pointer-events: none;
+  position: absolute;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.form.active {
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: all;
+  position: relative;
+}
+
+.form input,
+.form button {
+  width: 100%;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.form a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.form a:hover {
+  color: var(--text-base);
+  text-decoration: underline;
+}
+
+.form input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid rgba(255, 255, 255, 0.2); /* Always 2px! */
+  border-radius: 8px;
+  box-sizing: border-box; /* Make sure borders are included in size */
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-base);
+  outline: none;
+  transition: border 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.form input:focus {
+  border: 2px solid transparent; /* Still 2px — just transparent */
+  background: linear-gradient(var(--color-bg), var(--color-bg)) padding-box,
+              linear-gradient(135deg, var(--primary-start), var(--primary-end)) border-box;
+  box-shadow: 0 0 5px var(--shadow-neon-1), 0 0 10px var(--shadow-neon-2);
+  transition: border 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+
+
+.form button {
+  background: linear-gradient(135deg, var(--primary-start), var(--primary-end));
+  color: var(--text-base);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px var(--shadow-neon-1), 0 0 20px var(--shadow-neon-2);
+}
+
+.remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--text-base);
+}
+
+.remember input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-start);
+  cursor: pointer;
+}
+
+.remember label {
+  cursor: pointer;
+}
+
+.error-message {
+  color: var(--accent);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.error-message:empty {
+  display: none;
+}

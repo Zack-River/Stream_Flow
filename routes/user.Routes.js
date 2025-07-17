@@ -6,8 +6,15 @@ const {checkAuthenticated} = require('../middlewares/auth.Middleware');
 const { registerValidator, loginValidator } = require('../validators/user.Validators');
 const { validateRequest } = require('../middlewares/validate');
 const upload = require('../middlewares/uploadProfileImg');
+const path = require('path');
 
 //global routes
+router.get('/login', checkAuthenticated , (req,res) => {
+  if(req.user){
+    res.redirect('/')
+  }
+  res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+});
 router.post('/register', upload.single('profileImg'), registerValidator ,validateRequest ,authController.register);
 router.post('/login', loginValidator, validateRequest, authController.login);
 router.post('/forget-password', authController.forgetPassword);
