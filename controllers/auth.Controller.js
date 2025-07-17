@@ -6,7 +6,7 @@ const cookieHelper = require('../utils/cookie');
 
 exports.register = async function (req, res) {
   try {
-    const { name, username, email, password, role } = req.body;
+    const { name, username, email, password } = req.body;
 
     if (!name || !username || !email || !password) {
       return res.status(400).json({ message: "All fields are required!" });
@@ -29,7 +29,6 @@ exports.register = async function (req, res) {
       username,
       email: normalizedEmail,
       password: hashedPassword,
-      role: role && ["user", "admin"].includes(role) ? role : undefined
     });
 
     if (req.file) {

@@ -8,6 +8,6 @@ router.post('/admin/user' , checkAuthenticated, authorizeRoles('admin'), adminCo
 router.get('/admin/users' , checkAuthenticated, authorizeRoles('admin'), adminController.getUsers);
 router.get('/admin/users/:username' , checkAuthenticated, authorizeRoles('admin'), adminController.getUser);
 router.put('/admin/users/:username' , checkAuthenticated, authorizeRoles('admin'), adminController.updateUser);
-router.delete('/admin/users/:username' , checkAuthenticated, authorizeRoles('admin'), adminController.deleteUser);
+// router.delete('/admin/users/:username' , checkAuthenticated, authorizeRoles('admin'), adminController.deleteUser);
 
 module.exports = router;

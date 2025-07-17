@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 
 const upload = require("../config/multer");
-const auth = require("../middlewares/auth.Middleware");
+const { checkAuthenticated } = require("../middlewares/auth.Middleware");
+const validateObjectId = require("../middlewares/validateObjectId");
 
 const {
   uploadAudio,
@@ -11,13 +12,11 @@ const {
   streamAudio,
   updateAudio,
   deleteAudio
-} = require("../controllers/audioController");
-const validateObjectId = require("../middlewares/validateObjectId");
+} = require("../controllers/audio.Controller");
 
-// === Upload audio ===
 router.post(
   "/audio",
-  auth,
+  checkAuthenticated,
   upload.fields([
     { name: "audio", maxCount: 1 },
     { name: "cover", maxCount: 1 }
@@ -25,16 +24,11 @@ router.post(
   uploadAudio
 );
 
-// === List all public audios ===
 router.get("/", getPublicAudios);
-
-// === List own audios ===
-router.get("/mine", auth, getMyAudios);
-
-// === Stream audio by ID ===
+router.get("/mine", checkAuthenticated, getMyAudios);
 router.get("/stream/:id", streamAudio);
 
-router.put("/:id", auth, validateObjectId , upload.fields([{ name: "cover", maxCount: 1 }]), updateAudio);
-router.delete("/:id", auth, validateObjectId, deleteAudio);
+router.put("/:id", checkAuthenticated, validateObjectId, upload.fields([{ name: "cover", maxCount: 1 }]), updateAudio);
+router.delete("/:id", checkAuthenticated, validateObjectId, deleteAudio);
 
 module.exports = router;
