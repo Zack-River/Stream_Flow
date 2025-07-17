@@ -25,9 +25,9 @@ exports.verifyToken = function (token , type) {
 };
 
 exports.checkExpiry = function (token) {
-    const payload = jwt.decode(token)
-    if(payload.exp < now) return true;
-    return false;
+  const payload = jwt.decode(token);
+  const now = Math.floor(Date.now() / 1000); // ✅ add this
+  return payload.exp < now;
 };
 
 function generateToken(user, secret, period) {

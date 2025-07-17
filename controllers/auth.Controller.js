@@ -60,27 +60,35 @@ exports.login = async function (req, res) {
     const accessToken = req.cookies?.accessToken;
     const refreshToken = req.cookies?.refreshToken;
 
+    // 🔒 If valid access token → already logged in
     if (accessToken) {
       try {
+        console.log("found access");
         jwt.verifyToken(accessToken, "access");
         return res.status(200).json({ message: "Already logged in.", loggedIn: true });
       } catch (err) {
-        console.error('Access token invalid:', err);
-        return res.status(401).json({ message: 'Session expired, please log in again.' });
+        console.error("Access token invalid:", err);
+        // continue to login flow
       }
     }
 
+    // 🔒 If valid refresh token → already logged in
     if (refreshToken) {
       try {
-        jwt.verifyToken(refreshToken, 'refresh');
+        console.log("found refresh");
+        jwt.verifyToken(refreshToken, "refresh");
         return res.status(200).json({ message: "Already logged in.", loggedIn: true });
-      } catch (err) { 
-        console.error('Refresh token invalid:', err);
-        return res.status(401).json({ message: 'Session expired, please log in again.' });
+      } catch (err) {
+        console.error("Refresh token invalid:", err);
+        // continue to login flow
       }
     }
 
+    console.log("Incoming cookies:", req.cookies);
     const { email, password } = req.body;
+    const remember = req.body.remember === "on"; // ✅ make it boolean
+
+    console.log("Remember:", remember);
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email or Username and Password are required!" });
@@ -96,13 +104,17 @@ exports.login = async function (req, res) {
       return res.status(400).json({ message: "Wrong Email / Username or Password!" });
     }
 
+    // 🔒 If remember → set refresh token cookie
+    if (remember) {
+      const newRefreshToken = jwt.generateRefreshToken(user);
+      cookieHelper.setRefreshTokenCookie(res, newRefreshToken);
+      user.refreshToken = newRefreshToken;
+    }
+
+    // 🔒 Always set new access token cookie
     const newAccessToken = jwt.generateAccessToken(user);
-    const newRefreshToken = jwt.generateRefreshToken(user);
-
     cookieHelper.setAccessTokenCookie(res, newAccessToken);
-    cookieHelper.setRefreshTokenCookie(res, newRefreshToken);
 
-    user.refreshToken = newRefreshToken;
     user.lastLogin = Date.now();
     await user.save();
 

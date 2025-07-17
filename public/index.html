@@ -1,12 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Document</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ghanily | Home</title>
+<link rel="stylesheet" href="./assets/css/main.css">
 </head>
 <body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <a href="/" class="logo">Ghanily</a>
+    <a href="#" class="nav-link">Profile</a>
+    <a href="#" class="nav-link">My Playlists</a>
+    <a href="#" class="nav-link">Liked Songs</a>
+  </div>
 
-  
+  <!-- Main content -->
+  <div class="main">
+    <!-- Top navbar -->
+    <div class="topbar">
+      <div class="search-bar">
+        <input type="text" placeholder="Search for songs, artists...">
+      </div>
 
+      <div class="search-icon" id="searchIcon">
+        <p>🔍</p>
+      </div>
+
+      <div class="profile-container">
+        <div class="profile-circle" id="profileBtn">U</div>
+        <div class="dropdown" id="dropdownMenu">
+          <a href="#">Settings</a>
+          <a href="#">Profile</a>
+          <a href="#">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page content -->
+    <div class="content">
+      <h1>Welcome to <span draggable="true">Ghanily</span></h1>
+      <p>Discover and share your favorite songs with the world!</p>
+    </div>
+  </div>
+  <script src="./assets/js/main.js"></script>
 </body>
 </html>
