@@ -25,29 +25,37 @@ exports.checkAuthenticated = async (req, res, next) => {
     }
 
     if (!decoded && refreshToken) {
-      try {
-        const decodedRefresh = jwtHelper.verifyToken(refreshToken, 'refresh');
-        const user = await User.findById(decodedRefresh.id).select("+email");
-        if (!user) return res.status(401).json({ message: 'Invalid refresh token user.' });
+  try {
+    const decodedRefresh = jwtHelper.verifyToken(refreshToken, 'refresh');
 
-        const newAccessToken = jwtHelper.generateAccessToken(user);
-        cookie.setAccessTokenCookie(res, newAccessToken);
-
-        req.user = user;
-        req.isAuthenticated = true;
-        return next();
-      } catch (err) {
-        console.error('Refresh token invalid:', err);
-        return res.status(401).json({ message: 'Session expired, please log in again.' });
-      }
+    if (!decodedRefresh || !decodedRefresh.id) {
+      return res.status(401).json({ message: 'Invalid refresh token payload.' });
     }
 
-    if (!decoded) {
-      req.isAuthenticated = false;
-      return res.status(401).json({ message: 'Not authenticated. No valid token.' });
+    const user = await User.findById(decodedRefresh.id)
+    if (!user) return res.status(401).json({ message: 'Invalid refresh token user.' });
+
+    const newAccessToken = jwtHelper.generateAccessToken(user);
+    cookie.setAccessTokenCookie(res, newAccessToken);
+
+    req.user = user;
+    req.isAuthenticated = true;
+    return next();
+  } catch (err) {
+    console.error('Refresh token invalid:', err);
+    return res.redirect('/login');
+  }
+}
+
+    if (!decoded && !refreshToken) {
+        return res.redirect('/login');
     }
+
 
     const user = await User.findById(decoded.id);
+    console.log('Mongoose Doc?', user instanceof User);
+    console.log('Has save?', typeof user.save);
+
     if (!user) {
       return res.status(401).json({ message: 'User not found!' });
     }
@@ -60,6 +68,7 @@ exports.checkAuthenticated = async (req, res, next) => {
     res.status(500).json({ message: 'Something went wrong in auth check!' });
   }
 };
+
 
 exports.authorizeRoles = (...roles) => {
   return (req, res, next) => {

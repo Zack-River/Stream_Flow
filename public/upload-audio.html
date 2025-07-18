@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ghanily | Add New Song</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/assets/css/main.css">
+  <link rel="stylesheet" href="/assets/css/upload-audio.css">
+</head>
+<body>
+<!-- Sidebar -->
+  <div class="sidebar">
+    <a href="/" class="logo">Ghanily</a>
+    <a href="#" class="nav-link">Profile</a>
+    <a href="#" class="nav-link">My Playlists</a>
+    <a href="#" class="nav-link">Liked Songs</a>
+  </div>
+
+  <!-- Main content -->
+  <div class="main">
+    <!-- Top navbar -->
+    <div class="topbar">
+      <div class="search-bar">
+        <input type="text" placeholder="Search for songs, artists...">
+      </div>
+
+      <div class="search-icon" id="searchIcon">
+        <p>🔍</p>
+      </div>
+
+      <div class="profile-container">
+        <div class="profile-circle" id="profileBtn">
+          <img id="profileBtnImage" src="" alt="Profile">
+        </div>
+        <div class="dropdown" id="dropdownMenu">
+          <a href="/audios/upload">Upload Song</a>
+          <a href="/settings">Settings</a>
+          <a href="/profile">Profile</a>
+          <a href="/logout" id="logout">Logout</a>
+        </div>
+      </div>
+    </div>
+<div class="form-container">
+  <h1>Add New Song</h1>
+  <div class="form-group">
+    <label for="title">Song Title</label>
+    <input type="text" id="title" placeholder="Song Title" required>
+  </div>
+
+  <div class="form-group">
+    <label for="genre">Genre</label>
+    <input type="text" id="genre" placeholder="Genre" required>
+  </div>
+
+  <div class="form-group">
+    <label for="singer">Singer(s) (comma separated)</label>
+    <input type="text" id="singer" placeholder="e.g. John Doe, Jane Smith" required>
+  </div>
+
+  <!-- Cover Image Upload -->
+<div class="form-group file-upload">
+  <div class="custom-upload-box" id="coverUploadBox">
+    <i class="fas fa-image"></i>
+    <span>Click to upload cover image</span>
+    <input type="file" id="coverInput" accept="image/*" hidden>
+    <img id="coverPreview" src="" alt="Cover Preview" hidden>
+  </div>
+</div>
+
+<!-- Audio File Upload -->
+<div class="form-group file-upload">
+  <div class="custom-upload-box" id="audioUploadBox">
+    <i class="fas fa-music"></i>
+    <span>Click to upload audio</span>
+    <input type="file" id="audioInput" accept="audio/*" hidden>
+    <audio id="audioPreview" controls hidden></audio>
+  </div>
+</div>
+
+  <div class="form-group checkbox-group">
+  <label>
+    <input type="checkbox" name="isPrivate"> Private song
+  </label>
+  </div>
+
+  <button class="submit-btn" id="uploadBtn">Upload Song</button>
+</div>
+
+  <!-- Footer Media Player -->
+  <footer class="footer-player">
+    <div class="footer-left">
+      <img src="./assets/images/default-cover.png" alt="Cover" id="playerCover" class="footer-cover" />
+      <div>
+        <h4 id="playerTitle">No Song</h4>
+        <p id="playerArtist">---</p>
+      </div>
+    </div>
+
+    <div class="footer-controls">
+      <button id="playPauseBtn"><i class="fas fa-play"></i></button>
+      <button id="repeatBtn"><i class="fas fa-repeat"></i></button>
+    </div>
+
+    <div class="footer-progress">
+      <span id="currentTime">0:00</span>
+      <input type="range" id="seekBar" value="0" min="0" max="100" />
+      <span id="duration">0:00</span>
+    </div>
+
+    <audio id="footerAudio"></audio>
+  </footer>
+
+<script src="/assets/js/main.js"></script>
+<script src="/assets/js/upload-audio.js"></script>
+  <script src="/assets/js/footer.js"></script>
+  <script src="/assets/js/play-current-song.js"></script>
+  <script src="/assets/js/save-current-song.js"></script>
+</body>
+</html>

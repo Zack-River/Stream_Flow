@@ -17,18 +17,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ✅ Serve *all static files* from /public
+// ✅ Serve *all static files* from /public and /uploads
 app.use(express.static(path.join(__dirname, 'public')));
-
-// ✅ Example: /uploads → static
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // ✅ Routes
-app.use(userRoutes);
 app.use(adminRoutes);
-app.use(audioRoutes);
 app.use(adminAudioRoutes);
+app.use(userRoutes);
+app.use('/audios',audioRoutes);
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

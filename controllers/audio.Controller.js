@@ -3,10 +3,12 @@ const fs = require('fs');
 const Audio = require('../models/audio.Model');
 
 // === Upload Audio ===
+// === Upload Audio ===
 exports.uploadAudio = async (req, res, next) => {
   try {
     const { title, genre, isPrivate, singer } = req.body;
 
+    // Validate files exist
     if (!req.files?.audio?.length || !req.files?.cover?.length) {
       return res.status(400).json({ message: 'Audio and cover image are required.' });
     }
@@ -15,7 +17,27 @@ exports.uploadAudio = async (req, res, next) => {
       return res.status(400).json({ message: 'Title and genre are required.' });
     }
 
-    if (!singer || !Array.isArray(JSON.parse(singer)) || JSON.parse(singer).length === 0) {
+    // ✅ Correct singer parsing
+    let singerArray = [];
+
+    if (Array.isArray(singer)) {
+      singerArray = singer;
+    } else if (typeof singer === 'string') {
+      try {
+        // Try JSON.parse first (handles '["A","B"]')
+        const parsed = JSON.parse(singer);
+        if (Array.isArray(parsed)) {
+          singerArray = parsed;
+        } else {
+          singerArray = singer.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      } catch {
+        // If not JSON, fallback to comma-split
+        singerArray = singer.split(',').map(s => s.trim()).filter(Boolean);
+      }
+    }
+
+    if (!Array.isArray(singerArray) || singerArray.length === 0) {
       return res.status(400).json({ message: 'At least one singer is required.' });
     }
 
@@ -26,7 +48,7 @@ exports.uploadAudio = async (req, res, next) => {
       title: title.trim(),
       genre: genre.trim(),
       isPrivate: isPrivate === 'true',
-      singer: JSON.parse(singer),
+      singer: singerArray,
       audioUrl: `/uploads/audio/${audioFile.filename}`,
       coverImageUrl: `/uploads/audio/${coverFile.filename}`,
       uploadedBy: req.user._id,

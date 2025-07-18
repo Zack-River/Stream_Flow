@@ -29,7 +29,7 @@ function createCookie(res, name, token, maxAge) {
   res.cookie(name, token, {
     httpOnly: true,
     secure: isProduction, // Only HTTPS in prod
-    sameSite: 'strict',          // Prevent CSRF
+    sameSite: isProduction ? 'Strict' : 'Lax',          // Prevent CSRF
     maxAge: maxAge,
     path: '/',                   // Available to entire app
   });

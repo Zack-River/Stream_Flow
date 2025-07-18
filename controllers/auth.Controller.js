@@ -37,18 +37,20 @@ exports.register = async function (req, res) {
 
     await newUser.save();
 
-    res.status(201).json({
-      message: "User Created Successfully!",
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        username: newUser.username,
-        email: newUser.email,
-        role: newUser.role,
-        profileImg: newUser.profileImg,
-        createdAt: newUser.createdAt,
-      },
-    });
+    // res.status(201).json({
+    //   message: "User Created Successfully!",
+    //   user: {
+    //     id: newUser._id,
+    //     name: newUser.name,
+    //     username: newUser.username,
+    //     email: newUser.email,
+    //     role: newUser.role,
+    //     profileImg: newUser.profileImg,
+    //     createdAt: newUser.createdAt,
+    //   },
+    // });
+
+    return res.redirect('/login');
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error" });
@@ -118,10 +120,11 @@ exports.login = async function (req, res) {
     user.lastLogin = Date.now();
     await user.save();
 
-    res.status(200).json({
-      message: "Logged In successfully.",
-      accessToken: newAccessToken,
-    });
+    // res.status(200).json({
+    //   message: "Logged In successfully.",
+    //   accessToken: newAccessToken,
+    // });
+    return res.redirect('/');
 
   } catch (err) {
     console.error(err);
@@ -225,8 +228,8 @@ exports.refreshAccessToken = async function (req, res) {
 exports.logout = async function (req, res) {
   try {
     cookieHelper.clearAuthCookies(res);
-
-    return res.status(200).json({ message: 'Logged out successfully.' });
+    // return res.status(200).json({ message: 'Logged out successfully.' });
+    return res.redirect('/login');
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Something went wrong while logging out.' });

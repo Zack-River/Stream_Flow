@@ -149,3 +149,28 @@ body {
 .error-message:empty {
   display: none;
 }
+
+.password-wrapper {
+  width: 100%;
+  position: relative;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px; /* make space for the icon */
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  user-select: none;
+  color: #666; /* adjust to match your design */
+  font-size: 18px;
+}
+
+.toggle-password:hover {
+  color: #ffffff; /* darker on hover */
+}

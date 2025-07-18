@@ -28,15 +28,18 @@ exports.showProfile = function (req, res) {
       return res.status(401).json({ message: 'Not authenticated!' });
     }
 
+    const safeProfileImg = 
+      req.user.profileImg && req.user.profileImg !== 'No Profile Picture'
+      ? req.user.profileImg
+      : '/assets/images/default-profile.jpg';
+
     res.status(200).json({
       message: 'User profile fetched successfully.',
       user: {
         name: req.user.name,
         username: req.user.username,
-        email: req.user.email,
         phone: req.user.phone,
-        profileImg: req.user.profileImg,
-        role: req.user.role,
+        profileImg: safeProfileImg,
       }
     });
   } catch (err) {
@@ -46,52 +49,33 @@ exports.showProfile = function (req, res) {
 };
 
 exports.editProfile = async function (req, res) {
-  try {
-    const token = req.cookies?.refreshToken;
-    if (!token) {
-      return res.status(400).json({ message: 'Invalid or Expired Token!' });
-    }
+  console.log('req.file:', req.file);
+  console.log('req.body:', req.body);
+  console.log('editProfile originalUrl:', req.originalUrl);
 
-    const payload = jwt.decode(token);
-    const currentUsername = payload.username;
+  const user = req.user;
 
-    if (!currentUsername) {
-      return res.status(400).json({ message: 'Username is required!' });
-    }
-
-    const user = await User.findOne({ username: currentUsername });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found!' });
-    }
-
-    const { name, username, phone } = req.body;
-
-    if (name) user.name = name;
-    if (username) user.username = username;
-    if (phone) user.phone = phone;
-
-    // Check if a file was uploaded by multer
-    if (req.file) {
-      user.profileImg = `/uploads/profiles/${req.file.filename}`;
-    } else if (req.body.profileImg) {
-      // Optional: if you also want to allow passing a URL
-      user.profileImg = req.body.profileImg;
-    }
-
-    await user.save();
-
-    res.status(200).json({
-      message: 'Profile updated successfully!',
-      user: {
-        id: user._id,
-        name: user.name,
-        username: user.username,
-        phone: user.phone,
-        profileImg: user.profileImg,
-      },
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal Server Error' });
+  if (!user) {
+    return res.status(401).json({ message: 'Not authenticated' });
   }
+
+  if (req.body.name && req.body.name.trim()) user.name = req.body.name.trim();
+  if (req.body.username && req.body.username.trim()) user.username = req.body.username.trim();
+  if (req.body.phone && req.body.phone.trim()) user.phone = req.body.phone.trim();
+
+  if (req.file) {
+    user.profileImg = `/uploads/profiles/${req.file.filename}`;
+  }
+
+  await user.save();
+
+  res.status(200).json({
+    message: 'Profile updated!',
+    user: {
+      name: user.name,
+      username: user.username,
+      phone: user.phone,
+      profileImg: user.profileImg
+    }
+  });
 };

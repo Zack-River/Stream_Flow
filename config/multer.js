@@ -3,23 +3,33 @@ const path = require('path');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/audio'); // or split by type if you like
+    cb(null, 'uploads/audio');
   },
   filename: function (req, file, cb) {
-    const ext = path.extname(file.originalname);
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
-    cb(null, uniqueName);
-  },
+    // If this is the first file, create a base name
+    if (!req.uploadBaseName) {
+      req.uploadBaseName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
+    }
+
+    let ext = path.extname(file.originalname).toLowerCase();
+
+    // Optional: force cover to always be .jpg
+    if (file.fieldname === 'cover') {
+      ext = '.jpg';
+    }
+
+    cb(null, `${req.uploadBaseName}${ext}`);
+  }
 });
 
 const audioUpload = multer({
   storage,
   fileFilter: function (req, file, cb) {
     if (file.fieldname === 'audio') {
-      if (file.mimetype === 'audio/mpeg' || file.mimetype === 'audio/mp4' || file.mimetype === 'audio/x-m4a') {
+      if (file.mimetype.startsWith('audio/')) {
         cb(null, true);
       } else {
-        cb(new Error('Only MP3 or M4A audio files are allowed!'));
+        cb(new Error('Only audio files allowed!'));
       }
     } else if (file.fieldname === 'cover') {
       if (file.mimetype.startsWith('image/')) {

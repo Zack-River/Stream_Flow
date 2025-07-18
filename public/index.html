@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ghanily | Home</title>
-<link rel="stylesheet" href="./assets/css/main.css">
+  <link rel="icon" href="/assets/images/favicon.ico" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
 <body>
   <!-- Sidebar -->
@@ -28,11 +30,14 @@
       </div>
 
       <div class="profile-container">
-        <div class="profile-circle" id="profileBtn">U</div>
+        <div class="profile-circle" id="profileBtn">
+          <img id="profileBtnImage" src="" alt="Profile">
+        </div>
         <div class="dropdown" id="dropdownMenu">
-          <a href="#">Settings</a>
-          <a href="#">Profile</a>
-          <a href="#">Logout</a>
+          <a href="/audios/upload">Upload Song</a>
+          <a href="/settings">Settings</a>
+          <a href="/profile">Profile</a>
+          <a href="/logout" id="logout">Logout</a>
         </div>
       </div>
     </div>
@@ -43,6 +48,45 @@
       <p>Discover and share your favorite songs with the world!</p>
     </div>
   </div>
-  <script src="./assets/js/main.js"></script>
+
+
+  <!-- Footer Media Player -->
+  <footer class="footer-player">
+    <div class="footer-left">
+      <img src="./assets/images/default-cover.png" alt="Cover" id="playerCover" class="footer-cover" />
+      <div>
+        <h4 id="playerTitle">No Song</h4>
+        <p id="playerArtist">---</p>
+      </div>
+    </div>
+
+    <div class="footer-controls">
+      <button id="playPauseBtn"><i class="fas fa-play"></i></button>
+      <button id="repeatBtn"><i class="fas fa-repeat"></i></button>
+    </div>
+
+    <div class="footer-progress">
+      <span id="currentTime">0:00</span>
+      <input type="range" id="seekBar" value="0" min="0" max="100" />
+      <span id="duration">0:00</span>
+    </div>
+
+    <audio id="footerAudio"></audio>
+  </footer>
+
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/footer.js"></script>
+  <script src="/assets/js/play-current-song.js"></script>
+  <script src="/assets/js/save-current-song.js"></script>
+  <script>
+    fetch('/profile/data')
+      .then(response => response.json())
+      .then(data => {
+          document.getElementById('profileBtnImage').src = data.user.profileImg;
+      })
+      .catch(error => console.error('Error loading profile:', error));
+  </script>
+
 </body>
 </html>
