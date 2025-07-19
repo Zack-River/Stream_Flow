@@ -21,20 +21,20 @@ router.get('/force-new-token', async (req, res) => {
   });
   res.send({ message: 'New refresh token set!', refreshToken });
 });
+router.get('/login', (req, res) => {
+  if (req.isAuthenticated) {
+    return res.redirect('/');
+  }
+  return res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
+});
 
-router.get('/register', checkAuthenticated, (req, res) => {
+router.get('/register', (req, res) => {
   if (req.isAuthenticated) {
     return res.redirect('/');
   }
   return res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
 });
 router.post('/register', upload.single('profileImg'), registerValidator ,validateRequest ,authController.register);
-router.get('/login', checkAuthenticated, (req, res) => {
-  if (req.isAuthenticated) {
-    return res.redirect('/');
-  }
-  return res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
-});
 router.post('/login', loginValidator, validateRequest, authController.login);
 router.post('/forget-password', authController.forgetPassword);
 router.post('/reset-password', authController.resetPassword);

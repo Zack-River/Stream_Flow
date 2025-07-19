@@ -6,6 +6,7 @@
   <title>Ghanily | Home</title>
   <link rel="icon" href="/assets/images/favicon.ico" />
   <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/profile.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
 <body>
@@ -46,47 +47,114 @@
     <div class="content">
       <h1>Welcome to <span draggable="true">Ghanily</span></h1>
       <p>Discover and share your favorite songs with the world!</p>
-    </div>
-  </div>
 
-
-  <!-- Footer Media Player -->
-  <footer class="footer-player">
-    <div class="footer-left">
-      <img src="./assets/images/default-cover.png" alt="Cover" id="playerCover" class="footer-cover" />
-      <div>
-        <h4 id="playerTitle">No Song</h4>
-        <p id="playerArtist">---</p>
+      <div class="uploaded-songs">
+        <h2>Explore Public Songs</h2>
+        <div class="song-cards" id="publicSongs"></div>
       </div>
     </div>
 
-    <div class="footer-controls">
-      <button id="playPauseBtn"><i class="fas fa-play"></i></button>
-      <button id="repeatBtn"><i class="fas fa-repeat"></i></button>
-    </div>
+    <!-- Footer Media Player -->
+    <footer class="footer-player">
+      <div class="footer-left">
+        <img src="./assets/images/default-cover.png" alt="Cover" id="playerCover" class="footer-cover" />
+        <div>
+          <h4 id="playerTitle">No Song</h4>
+          <p id="playerArtist">---</p>
+        </div>
+      </div>
 
-    <div class="footer-progress">
-      <span id="currentTime">0:00</span>
-      <input type="range" id="seekBar" value="0" min="0" max="100" />
-      <span id="duration">0:00</span>
-    </div>
+      <div class="footer-controls">
+        <button id="playPauseBtn"><i class="fas fa-play"></i></button>
+        <button id="repeatBtn"><i class="fas fa-repeat"></i></button>
+      </div>
 
-    <audio id="footerAudio"></audio>
-  </footer>
+      <div class="footer-progress">
+        <span id="currentTime">0:00</span>
+        <input type="range" id="seekBar" value="0" min="0" max="100" />
+        <span id="duration">0:00</span>
+      </div>
 
+      <audio id="footerAudio"></audio>
+    </footer>
 
-  <script src="/assets/js/main.js"></script>
-  <script src="/assets/js/footer.js"></script>
-  <script src="/assets/js/play-current-song.js"></script>
-  <script src="/assets/js/save-current-song.js"></script>
-  <script>
-    fetch('/profile/data')
-      .then(response => response.json())
-      .then(data => {
+    <script src="/assets/js/main.js"></script>
+    <script src="/assets/js/footer.js"></script>
+    <script src="/assets/js/play-current-song.js"></script>
+    <script src="/assets/js/save-current-song.js"></script>
+
+    <script>
+      // Load profile image
+      fetch('/profile/data')
+        .then(response => response.json())
+        .then(data => {
           document.getElementById('profileBtnImage').src = data.user.profileImg;
-      })
-      .catch(error => console.error('Error loading profile:', error));
-  </script>
+        })
+        .catch(error => console.error('Error loading profile:', error));
+    </script>
+
+    <script>
+  fetch('/audios/song/')
+    .then(res => res.json())
+    .then(data => {
+      const songs = data.audios;
+      const container = document.getElementById('publicSongs');
+
+      songs.forEach(song => {
+        const card = document.createElement('div');
+        card.className = 'song-card';
+
+        card.innerHTML = `
+          <img src="${song.coverImageUrl}" alt="Cover" class="song-cover" />
+          <div class="song-info-wrapper">
+            <div class="song-info">
+              <h3>${song.title}</h3>
+              <p>${song.singer.join(', ')}</p>
+              <p>By: ${song.uploadedBy?.name || 'Unknown'}</p>
+            </div>
+            <button class="play-btn"
+              data-id="${song._id}"
+              data-cover="${song.coverImageUrl}"
+              data-title="${song.title.replace(/"/g, '&quot;')}"
+              data-singers="${song.singer.join(', ').replace(/"/g, '&quot;')}">
+              <i class="fas fa-play"></i>
+            </button>
+          </div>
+        `;
+
+        container.appendChild(card);
+      });
+
+      // Attach all play buttons
+      document.querySelectorAll('.play-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.dataset.id;
+          const cover = btn.dataset.cover;
+          const title = btn.dataset.title;
+          const singers = btn.dataset.singers;
+
+          console.log('Playing:', { id, cover, title, singers });
+
+          playSong(id, cover, title, singers);
+        });
+      });
+    })
+    .catch(err => console.error(err));
+
+  function playSong(id, coverImageUrl, title, singers) {
+    const audio = document.getElementById('footerAudio');
+    const streamUrl = `/audios/stream/${id}`;
+
+    console.log('Stream URL:', streamUrl);
+
+    audio.src = streamUrl;
+    audio.play().catch(err => console.error('Audio play failed:', err));
+
+    document.getElementById('playerCover').src = coverImageUrl;
+    document.getElementById('playerTitle').textContent = title;
+    document.getElementById('playerArtist').textContent = singers;
+  }
+</script>
 
 </body>
 </html>
