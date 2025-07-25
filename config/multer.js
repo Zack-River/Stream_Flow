@@ -6,14 +6,12 @@ const storage = multer.diskStorage({
     cb(null, 'uploads/audio');
   },
   filename: function (req, file, cb) {
-    // If this is the first file, create a base name
     if (!req.uploadBaseName) {
       req.uploadBaseName = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
     }
 
     let ext = path.extname(file.originalname).toLowerCase();
 
-    // Optional: force cover to always be .jpg
     if (file.fieldname === 'cover') {
       ext = '.jpg';
     }

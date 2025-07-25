@@ -47,7 +47,7 @@ fetch("/audios/mine")
       // 🟢 Remove starting [ and ending ]
       let parts = audio.singer.map(s => s.trim());
 
-      let combined = parts.join(""); // e.g. ["[\"David Guetta\"", "\"Bebe Rexha\"]"] => ["[\"David Guetta\"\"Bebe Rexha\"]"]
+      let combined = parts.join(""); //["[\"David Guetta\"", "\"Bebe Rexha\"]"] => ["[\"David Guetta\"\"Bebe Rexha\"]"]
       
       // Remove the first [ if it exists and the last ] if it exists
       if (combined.startsWith("[")) combined = combined.slice(1);

@@ -10,8 +10,6 @@ window.addEventListener('click', function(e) {
     dropdownMenu.style.display = 'none';
   }
 });
-
-// ✅ ✅ Use footerAudio from global scope!
 function loadSong(audioData) {
   footerAudio.src = `/uploads/audio/${audioData.audioUrl}`;
   playerCover.src = audioData.coverImageUrl;

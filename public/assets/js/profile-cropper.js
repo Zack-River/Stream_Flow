@@ -7,7 +7,6 @@ const content = document.getElementById('content');
 let cropper;
 let croppedFile = null;
 
-// Open file picker when preview clicked
 profilePreview.addEventListener('click', () => {
   imageInput.click();
 });

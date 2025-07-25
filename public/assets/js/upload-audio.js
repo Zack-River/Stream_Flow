@@ -26,7 +26,6 @@ document.getElementById('uploadBtn').addEventListener('click', async () => {
   formData.append('title', title);
   formData.append('genre', genre);
 
-  // ✅ MUST JSON.stringify or backend will break
   formData.append('singer', JSON.stringify(singers));
 
   formData.append('audio', audio);

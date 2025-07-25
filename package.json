@@ -1,24 +1,24 @@
 {
-  "name": "practical-project",
+  "name": "Ghanily-Music-App",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "start": "node server.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Zack-River/NTI_Backend_Project.git"
+    "url": "git+https://github.com/Zack-River/Ghanily_Music_App.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/Zack-River/NTI_Backend_Project/issues"
+    "url": "https://github.com/Zack-River/Ghanily_Music_App/issues"
   },
-  "homepage": "https://github.com/Zack-River/NTI_Backend_Project#readme",
+  "homepage": "https://github.com/Zack-River/Ghanily_Music_App#readme",
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
