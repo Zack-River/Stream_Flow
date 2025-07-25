@@ -1,0 +1,166 @@
+:root {
+  --color-bg: #121212;
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --primary-start: #ff0080;
+  --primary-end: #7928ca;
+  --accent: #ff66b2;
+  --text-base: #ffffff;
+  --text-secondary: #cccccc;
+  --shadow-neon-1: #ff0080;
+  --shadow-neon-2: #7928ca;
+}
+
+/* ---- CROP MODAL ---- */
+
+.cropper-overlay {
+  position: fixed;  /* 🔑 fix this */
+  inset: 0;          /* shorthand for top:0; bottom:0; left:0; right:0 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.379); /* or rgba if you want some transparency */
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cropper-overlay.show {
+  opacity: 1;
+}
+
+.cropper-modal {
+  align-self: center;
+  justify-self: center;
+  width: 400px;
+  height: 400px;
+  background: black;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  transform: scale(0.8);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.cropper-modal.show {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.cropper-image-wrapper {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cropper-modal.show {
+  transform: scale(1);
+  opacity: 1;
+}
+
+.cropper-modal img {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.cropper-actions {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  padding: 10px 20px;
+  background: rgba(0, 0, 0, 0.153);
+  gap: 10px;
+}
+
+.crop-btn, .cancel-btn {
+  background: linear-gradient(to right, var(--primary-start), var(--primary-end));
+  border: none;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.cancel-btn {
+  background: #444;
+}
+
+/* ---- PREVIEW ---- */
+
+.profile-img-preview {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 100px;
+  font-weight: bold;
+  color: var(--text-base);
+  cursor: pointer;
+  border: 4px solid transparent;
+  animation: neonGlow 3s ease-in-out infinite alternate;
+}
+
+.profile-img-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-img-preview span {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 100px;
+  font-weight: bold;
+  z-index: 1;
+}
+
+.profile-img-preview:hover img {
+  filter: brightness(0.7);
+}
+
+.profile-img-preview::after {
+  content: "\f030";
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+  font-size: 48px;
+  color: #fff;
+  position: absolute;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.profile-img-preview:hover::after {
+  opacity: 1;
+}
+
+@keyframes neonGlow {
+  0% {
+    border-color: var(--primary-start);
+    box-shadow: 0 0 10px var(--primary-start),
+                0 0 20px var(--primary-start),
+                0 0 40px var(--primary-start);
+  }
+  100% {
+    border-color: var(--primary-end);
+    box-shadow: 0 0 10px var(--primary-end),
+                0 0 20px var(--primary-end),
+                0 0 40px var(--primary-end);
+  }
+}

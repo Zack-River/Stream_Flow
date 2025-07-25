@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ghanily | Profile</title>
+  <link rel="icon" href="/assets/images/favicon.ico" />
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <link rel="stylesheet" href="/assets/css/profile.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <a href="/" class="logo">Ghanily</a>
+    <a href="#" class="nav-link">Profile</a>
+    <a href="#" class="nav-link">My Playlists</a>
+    <a href="#" class="nav-link">Liked Songs</a>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="search-bar">
+        <input type="text" placeholder="Search for songs, artists..." id="songSearch" />
+      </div>
+      <div class="search-icon" id="searchIcon">
+        <i class="fas fa-search"></i>
+      </div>
+      <div class="profile-container">
+        <div class="profile-circle" id="profileBtn">
+          <img id="profileBtnImage" src="" alt="Profile" hidden />
+          <span id="profileBtnInitial">U</span>
+        </div>
+        <div class="dropdown" id="dropdownMenu">
+          <a href="/audios/upload">Upload Song</a>
+          <a href="/settings">Settings</a>
+          <a href="/profile">Profile</a>
+          <a href="/logout" id="logout">Logout</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="profile-header">
+        <div class="profile-img">
+          <img src="" alt="Profile Picture" id="profileImage" />
+        </div>
+        <div class="profile-info">
+          <h1 class="profile-name" id="name"></h1>
+          <p class="profile-username" id="username"></p>
+        </div>
+      </div>
+
+      <div class="uploaded-songs">
+        <h2>Your Uploaded Songs</h2>
+        <div class="song-cards"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Media Player -->
+  <footer class="footer-player">
+    <div class="footer-left">
+      <img src="./assets/images/default-cover.png" alt="Cover" id="playerCover" class="footer-cover" />
+      <div>
+        <h4 id="playerTitle">No Song</h4>
+        <p id="playerArtist">---</p>
+      </div>
+    </div>
+
+    <div class="footer-controls">
+      <button id="playPauseBtn"><i class="fas fa-play"></i></button>
+      <button id="repeatBtn"><i class="fas fa-repeat"></i></button>
+    </div>
+
+    <div class="footer-progress">
+      <span id="currentTime">0:00</span>
+      <input type="range" id="seekBar" value="0" min="0" max="100" />
+      <span id="duration">0:00</span>
+    </div>
+
+    <audio id="footerAudio"></audio>
+  </footer>
+
+  <script src="/assets/js/main.js"></script>
+  <script src="/assets/js/profile.js"></script>
+  <script src="/assets/js/footer.js"></script>
+  <script src="/assets/js/play-current-song.js"></script>
+  <script src="/assets/js/save-current-song.js"></script>
+</body>
+</html>

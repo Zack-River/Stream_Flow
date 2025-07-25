@@ -1,0 +1,272 @@
+:root {
+  --color-bg: #121212;
+  --color-surface: #1f1f1f;
+  --color-border: #333;
+  --color-text: #eee;
+  --color-text-secondary: #aaa;
+  --color-primary: #7928ca;
+  --footer-height: 80px;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #eee;
+  display: flex;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+
+.sidebar {
+  position: fixed;
+  top: 0;            
+  left: 0;           
+  width: 180px;      
+  height: 100vh;     
+  background: #1f1f1f;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+
+.logo {
+  font-size: 35px;
+  font-weight: 800;
+  background: linear-gradient(45deg, #ff416c, #7928ca);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 40px;
+  text-decoration: none;
+  display: inline-block;
+  background-size: 200% 200%;
+  animation: gradientMove 1.5s ease infinite alternate;
+  cursor: pointer;
+}
+
+.nav-link {
+  color: #ccc;
+  text-decoration: none;
+  margin-bottom: 20px;
+  font-size: 16px;
+  transition: color 0.3s;
+}
+
+.nav-link:hover {
+  color: #fff;
+}
+
+.main {
+  position: absolute;
+  top: 60px;
+  left: 220px;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  padding: 20px;
+  padding-bottom: calc(var(--footer-height) + 20px);
+  box-sizing: border-box;
+}
+
+/* Top navbar */
+.topbar {
+  background: #1f1f1f;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: fixed; /* Make it fixed! */
+  top: 0;
+  left: 220px; /* Align with sidebar width */
+  right: 0;
+  height: 40px;
+  z-index: 10;
+}
+
+.search-bar input {
+  padding: 8px 12px;
+  border: 1px solid #333;
+  border-radius: 20px;
+  outline: none;
+  width: 300px;
+  background: #2a2a2a;
+  color: #eee;
+}
+
+.search-bar input::placeholder {
+  color: #aaa;
+}
+
+.search-icon {
+  display: none; /* hidden by default */
+  font-size: 20px;
+  color: #eee;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.profile-container {
+  position: absolute;
+  right: 20px;
+}
+
+.profile-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: #333;
+  color: #fff;
+}
+
+.profile-circle #profileBtnImage {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.dropdown {
+  position: absolute;
+  width: max-content;
+  top: 50px;
+  right: 0;
+  background: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 5px;
+  display: none;
+  flex-direction: column;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+}
+
+.dropdown a {
+  padding: 10px 15px;
+  text-decoration: none;
+  color: #eee;
+  border-bottom: 1px solid #333;
+  transition: background 0.3s;
+}
+
+.dropdown a:last-child {
+  border-bottom: none;
+}
+
+.dropdown a:hover {
+  background: #333;
+}
+
+.content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.content span {
+  font-weight: bold;
+  background: linear-gradient(45deg, #ff416c, #7928ca);
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientMove 1.5s ease infinite alternate;
+  cursor: pointer;
+  display: inline-block;
+  filter: drop-shadow(0 0 20px #7928ca);
+}
+
+/* === Media Player Footer === */
+.footer-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 80px;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 0 30px;
+  box-shadow: 0 -2px 20px rgba(121, 40, 202, 0.4);
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.footer-cover {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  object-fit: cover;
+  box-shadow: 0 0 10px var(--color-primary);
+}
+
+.footer-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.footer-controls button {
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.footer-controls button:hover {
+  color: var(--color-primary);
+}
+
+.footer-controls #repeatBtn.active i {
+  color: var(--color-primary);
+}
+
+.footer-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 600px;
+  width: 100%;
+}
+
+#seekBar {
+  flex: 1;
+  height: 3px;
+  background: var(--color-border);
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-bar {
+    display: none;
+  }
+
+  .search-icon {
+    display: inline-block; /* or block — works both ways */
+  }
+}
