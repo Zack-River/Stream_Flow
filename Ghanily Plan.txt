@@ -1,0 +1,4 @@
+1- Album Section:
+To create new Album only controlled by it's creator.
+
+2-
