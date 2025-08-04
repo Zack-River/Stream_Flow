@@ -1,0 +1,268 @@
+{
+  "info": {
+    "_postman_id": "b1234567-89ab-cdef-0123-456789abcdef",
+    "name": "SoundWave API",
+    "description": "Complete Postman Collection for SoundWave — Audio Upload, Streaming, User Auth, Admin Control. Use `{{base_url}}` for server URL and `{{access_token}}` for protected routes.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "User Authentication flows: Register, Login, Logout, Forgot & Reset Password.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"username\": \"johndoe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"StrongP@ssw0rd\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/register",
+              "host": ["{{base_url}}"],
+              "path": ["register"]
+            },
+            "description": "Register a new user. Username and email must be unique."
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"StrongP@ssw0rd\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": ["{{base_url}}"],
+              "path": ["login"]
+            },
+            "description": "Login with email & password. Response includes `accessToken` & `refreshToken`. Copy `accessToken` to `{{access_token}}`."
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/logout",
+              "host": ["{{base_url}}"],
+              "path": ["logout"]
+            },
+            "description": "Logout user & clear tokens (if cookies used)."
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["forgot-password"]
+            },
+            "description": "Request a reset password link. Server sends email with `resetToken`."
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"RESET_TOKEN\",\n  \"password\": \"NewP@ssw0rd\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["reset-password"]
+            },
+            "description": "Reset user password using the valid `resetToken` from email."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "description": "User Profile endpoints: Get & Update profile details.",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["profile"]
+            },
+            "description": "Fetch logged-in user profile. Requires valid `accessToken`."
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"phone\": \"+1234567890\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": ["{{base_url}}"],
+              "path": ["profile"]
+            },
+            "description": "Update name, phone, profile image, or password. Password must meet requirements."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audio",
+      "description": "Audio Upload, Stream, Update & Delete. Requires authentication.",
+      "item": [
+        {
+          "name": "Upload Audio",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "title", "value": "Summer Vibes", "type": "text" },
+                { "key": "genre", "value": "Pop", "type": "text" },
+                { "key": "audio", "type": "file", "src": [] },
+                { "key": "cover", "type": "file", "src": [] },
+                { "key": "isPrivate", "value": "false", "type": "text" }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/upload/audio",
+              "host": ["{{base_url}}"],
+              "path": ["upload", "audio"]
+            },
+            "description": "Upload an audio file + cover image. Accepts MP3, WAV, etc. `isPrivate` true/false."
+          }
+        },
+        {
+          "name": "Stream Audio",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/stream/{{audio_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["stream", "{{audio_id}}"]
+            },
+            "description": "Stream audio by ID. Audio must be public or owned by the user."
+          }
+        },
+        {
+          "name": "Update Audio",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"New Title\",\n  \"genre\": \"Rock\",\n  \"isPrivate\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/audio/{{audio_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["audio", "{{audio_id}}"]
+            },
+            "description": "Update audio details by ID. Must be owner or admin."
+          }
+        },
+        {
+          "name": "Delete Audio",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/audio/{{audio_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["audio", "{{audio_id}}"]
+            },
+            "description": "Delete audio by ID. Must be owner or admin."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "description": "Admin-only endpoints: Manage users & audios. Requires `role: admin`.",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/users",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"]
+            },
+            "description": "Admin: Get all registered users."
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{access_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated User\",\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users/{{username}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "{{username}}"]
+            },
+            "description": "Admin: Update a user’s details by username."
+          }
+        },
+        {
+          "name": "Deactivate User",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{access_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/admin/users/{{username}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "{{username}}"]
+            },
+            "description": "Admin: Soft-delete (deactivate) a user by username."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "access_token", "value": "" },
+    { "key": "audio_id", "value": "" },
+    { "key": "username", "value": "" }
+  ]
+}

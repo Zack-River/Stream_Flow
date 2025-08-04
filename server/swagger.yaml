@@ -1,0 +1,353 @@
+openapi: 3.0.3
+info:
+  title: SoundWave API
+  version: 1.0.0
+  description: >
+    SoundWave is a full-featured audio streaming and management app.  
+    This API provides user registration, authentication, audio uploads, streaming, and admin controls.
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: Auth
+  - name: Profile
+  - name: Audio
+  - name: Admin
+
+paths:
+  /register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Login success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+
+  /logout:
+    get:
+      tags: [Auth]
+      summary: Logout user
+      responses:
+        '200':
+          description: Logout success
+
+  /forgot-password:
+    post:
+      tags: [Auth]
+      summary: Send password reset link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Reset link sent
+
+  /reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Password reset successful
+
+  /profile:
+    get:
+      tags: [Profile]
+      summary: Get current user profile
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    put:
+      tags: [Profile]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /upload/audio:
+    post:
+      tags: [Audio]
+      summary: Upload new audio
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AudioUpload'
+      responses:
+        '201':
+          description: Audio uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Audio'
+
+  /stream/{id}:
+    get:
+      tags: [Audio]
+      summary: Stream an audio file by ID
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Audio streaming
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Get all users
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserResponse'
+
+  /admin/users/{username}:
+    put:
+      tags: [Admin]
+      summary: Update user by username
+      parameters:
+        - in: path
+          name: username
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+    delete:
+      tags: [Admin]
+      summary: Deactivate user by username
+      parameters:
+        - in: path
+          name: username
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: User deactivated
+
+components:
+  schemas:
+    UserRegister:
+      type: object
+      properties:
+        name:
+          type: string
+          example: John Doe
+          description: Full name, min 2 chars
+        username:
+          type: string
+          example: johndoe
+          description: Unique username
+        email:
+          type: string
+          example: john@example.com
+          description: User's email
+        password:
+          type: string
+          example: StrongP@ssw0rd
+          description: Min 6 chars, must include uppercase, lowercase, special char
+        phone:
+          type: string
+          example: "+123456789"
+          description: Optional phone number
+    UserLogin:
+      type: object
+      properties:
+        email:
+          type: string
+          example: john@example.com
+        password:
+          type: string
+          example: StrongP@ssw0rd
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: John Smith
+        username:
+          type: string
+          example: johnsmith
+        phone:
+          type: string
+          example: "+987654321"
+        profileImg:
+          type: string
+          example: "profile123.jpg"
+        password:
+          type: string
+          example: "NewP@ssw0rd"
+        role:
+          type: string
+          enum: [user, admin]
+          example: admin
+
+    UserResponse:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 64c4e6f2b1a2f2a5cabc1234
+        name:
+          type: string
+          example: John Doe
+        username:
+          type: string
+          example: johndoe
+        email:
+          type: string
+          example: john@example.com
+        phone:
+          type: string
+          example: "+123456789"
+        profileImg:
+          type: string
+          example: "profile.jpg"
+        role:
+          type: string
+          example: user
+        isActive:
+          type: boolean
+          example: true
+        lastLogin:
+          type: string
+          format: date-time
+          example: "2025-08-04T10:00:00Z"
+
+    AudioUpload:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Summer Vibes"
+        genre:
+          type: string
+          example: "Pop"
+        audio:
+          type: string
+          format: binary
+        cover:
+          type: string
+          format: binary
+        isPrivate:
+          type: boolean
+          example: false
+
+    Audio:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 64c4e6f2b1a2f2a5cabc5678
+        title:
+          type: string
+          example: "Summer Vibes"
+        genre:
+          type: string
+          example: "Pop"
+        audioUrl:
+          type: string
+          example: "/uploads/audio/12345.mp3"
+        coverImageUrl:
+          type: string
+          example: "/uploads/audio/12345.jpg"
+        isPrivate:
+          type: boolean
+          example: false
+        singer:
+          type: array
+          items:
+            type: string
+          example: ["Artist A", "Artist B"]
+        uploadedBy:
+          type: string
+          example: 64c4e6f2b1a2f2a5cabc1234
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-08-04T10:00:00Z"

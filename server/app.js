@@ -2,6 +2,10 @@ const express = require('express');
 const connectDB = require('./config/db');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const {marked} = require('marked');
+const fs = require('fs');
 
 // Routes
 const adminRoutes = require('./routes/admin.Routes.js');
@@ -12,6 +16,7 @@ const adminAudioRoutes = require('./routes/admin.audio.Routes.js');
 connectDB();
 
 const app = express();
+const swaggerDocument = YAML.load(path.join(__dirname, 'swagger.yaml'));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -24,6 +29,36 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // ✅ Routes
+app.get('/docs', (req, res) => {
+  try {
+    // Read the README.md file
+    const readmePath = path.join(__dirname, 'readme.md');
+    const readmeContent = fs.readFileSync(readmePath, 'utf8');
+    
+    // Convert markdown to HTML
+    const htmlContent = marked(readmeContent);
+    
+    // Read the HTML template
+    const templatePath = path.join(__dirname, 'public', 'doc.html');
+    let template = fs.readFileSync(templatePath, 'utf8');
+    
+    // Replace placeholder with content
+    const finalHtml = template.replace('{{CONTENT}}', htmlContent);
+    
+    res.send(finalHtml);
+  } catch (error) {
+    console.error('Error serving documentation:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to load documentation'
+    });
+  }
+});
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: "SoundWave API Documentation",
+}));
 app.use(adminRoutes);
 app.use(adminAudioRoutes);
 app.use(userRoutes);
