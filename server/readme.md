@@ -33,11 +33,6 @@ Stream Flow/
 ├─ Stream Flow.postman_collection.json
 ├─ .env # Environment secrets
 ├─ server.js # Entry point
-
-yaml
-Copy
-Edit
-
 ---
 
 ## ⚙️ Setup & Run
@@ -47,13 +42,13 @@ Edit
 ```bash
 git clone https://github.com/Zack-River/Ghanily_Music_App.git
 cd Ghanily_Music_App
-
+```
 2️⃣ Install
 
-bash
-Copy
-Edit
+```bash
 npm install
+```
+
 3️⃣ Configure
 
 Create a .env file:
@@ -68,18 +63,15 @@ NODE_ENV=development
 
 4️⃣ Run
 
-bash
-Copy
-Edit
+```bash
 npm run dev
-
+```
 4️⃣ Run
 
-bash
-Copy
-Edit
+```bash
 npm run dev
 Server runs at http://localhost:3000
+```
 
 📡 API Docs
 Swagger UI: Open the swagger.yaml in Swagger Editor — or serve with tools like swagger-ui-express.
@@ -159,11 +151,6 @@ MIT License — Free to use & extend.
 🧩 Multer Docs
 
 Happy coding & streaming! 🎶✨
-
-yaml
-Copy
-Edit
-
 ---
 
 ## ✅ **Next**
@@ -174,17 +161,3 @@ I can pack this up as:
 - `Stream Flow.postman_collection.json`
 
 Just say **“Package it!”** and I’ll generate a **ready-to-download zip** for you! 🚀
-
-
-
-
-
-
-
-Ask ChatGPT
-
-
-
-Tools
-
-
