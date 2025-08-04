@@ -35,20 +35,25 @@ app.get("/debug-files", (req, res) => {
 
 app.get("/doc", (req, res) => {
   try {
-    const readmePath = path.join(__dirname, "readme.md");
+    const readmePath = path.join(__dirname, "README.md");
     const indexPath = path.join(__dirname, "public", "doc.html");
-    
+
     const readmeContent = fs.readFileSync(readmePath, "utf8");
     const htmlContent = marked(readmeContent);
     const template = fs.readFileSync(indexPath, "utf8");
-    
+
+    if (!template.includes("{{CONTENT}}")) {
+      throw new Error("Template missing {{CONTENT}} placeholder");
+    }
+
     const finalHtml = template.replace("{{CONTENT}}", htmlContent);
-    res.send(finalHtml);
+    res.type("html").send(finalHtml);
   } catch (error) {
-    console.error("Error serving documentation:", error);
+    console.error("📛 /doc error:", error);
     res.status(500).json({
       success: false,
       error: "Failed to load documentation",
+      details: error.message,
     });
   }
 });
