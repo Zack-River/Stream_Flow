@@ -1,125 +1,167 @@
+# 🎵 Stream Flow
 
-# 🎵 Ghanily Music App
+**Stream Flow** is a full-stack **Node.js + Express + MongoDB** audio streaming app — with secure **JWT auth**, **role-based access**, audio **upload**, **streaming**, and a robust **admin panel**.
 
-**Ghanily** is a full-stack music streaming application where users can register, log in, upload tracks, and stream music.  
-Built with **Node.js**, **Express**, **MongoDB**, and structured for easy integration with a modern frontend (React, Next.js, or any SPA).
-
----
-
-## 🚀 Live Demo
-
-🌐 [Not Deployed Yet]
+It's fully documented with **Swagger** and a **Postman collection** so frontend devs can integrate instantly.
 
 ---
 
-## 📂 Project Structure
-**Backend:**
-server/
-├── config/         # DB config, environment setup
-├── controllers/    # Logic for auth, music, user
-├── models/         # Mongoose schemas
-├── routes/         # API endpoints
-├── middleware/     # Auth, upload, error handling
-├── uploads/        # Uploaded files
-├── util/           # Utility functions
-├── app.js          # Express app
-├── server.js       # HTTP server
-├── .env.example    # Environment variables template
-└── README.md
+## 📦 What's inside?
 
-**Frontend:**
-client/
-├── Folder/          # comment
-├── Folder/          # comment
-├── Folder/          # comment
-├── Folder/          # comment
-├── Folder/          # comment
-├── Folder/          # comment
-├── Folder/          # comment
-├── File.js          # comment
-├── File.js          # comment
-├── .env.example     # comment
-└── README.md
+- ✅ **User Auth** (Register, Login, Refresh, Reset Password)
+- ✅ **Profile management**
+- ✅ **Audio upload & streaming**
+- ✅ **Admin tools** (Manage users, deactivate, delete audios)
+- ✅ **Multer** for file uploads
+- ✅ **JWT tokens** (Access, Refresh, Reset)
+- ✅ **Nodemailer** for reset password
+- ✅ **Express Validator**
+- ✅ **Swagger.yaml** for full API docs
+- ✅ **Postman collection** for testing & frontend integration
 
 ---
 
-## 🧩 Tech Stack
+## 📁 Folder Structure
 
-- **Backend:** Node.js, Express.js
-- **Database:** MongoDB + Mongoose
-- **Auth:** JWT
-- **Uploads:** Multer for audio & images
-- **Frontend:** React , tailwind , vite
-- **Deployment:** Ready for Render, Railway, or Vercel (backend only)
+```
+Stream Flow/
+├─ controllers/     # Route logic (auth, audio, admin)
+├─ models/          # Mongoose schemas (User, Audio)
+├─ routes/          # API route definitions
+├─ utils/           # Helpers: JWT, hash, mailer, cookies
+├─ uploads/         # Uploaded audio files + covers
+├─ swagger.yaml     # OpenAPI documentation
+├─ Stream Flow.postman_collection.json
+├─ .env             # Environment secrets
+└─ server.js        # Entry point
+```
 
 ---
 
-## ⚙️ Setup & Installation
+## ⚙️ Setup & Run
+
+### 1️⃣ **Clone**
 
 ```bash
-# Clone the repository
 git clone https://github.com/Zack-River/Ghanily_Music_App.git
 cd Ghanily_Music_App
+```
 
-# Install dependencies
+### 2️⃣ **Install**
+
+```bash
 npm install
 ```
 
-**Create a `.env` file:** (or use `.env.example`)
+### 3️⃣ **Configure**
+
+Create a `.env` file:
 
 ```env
-PORT=5000
-MONGO_URI=your_mongodb_connection
-JWT_SECRET=your_secret_key
+PORT=3000
+MONGO_URI=mongodb://localhost:27017/Ghanily_Music_App
+ACCESS_SECRET=YourAccessSecret
+REFRESH_SECRET=YourRefreshSecret
+RESET_SECRET=YourResetSecret
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+NODE_ENV=development
 ```
 
----
-
-## 🏃 Run Locally
+### 4️⃣ **Run**
 
 ```bash
-# Start server
-npm start
-
-# Or run with nodemon for development
 npm run dev
 ```
 
----
-
-## ✅ API Base URL
-
-http://localhost:5000/api
+Server runs at `http://localhost:3000`
 
 ---
 
-## ⚙️ Key Features
+## 📡 API Docs
 
-- 🔑 Secure JWT Auth
-- 📁 Upload songs and cover images
-- 🎧 Stream music files
-- 🗂️ Organized MVC structure
-- 🔗 Ready for front-end integration
+**Swagger UI:** Open the `swagger.yaml` in Swagger Editor — or serve with tools like swagger-ui-express.
+
+**Postman:**
+- Import `Stream Flow.postman_collection.json` into Postman
+- Set `{{base_url}}` to your local URL
+- Use `/register` + `/login` to get tokens
+- Add `{{access_token}}` for secured routes
+
+---
+
+## 📂 Core Endpoints (Summary)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/register` | Register new user |
+| POST | `/login` | Login, receive tokens |
+| GET | `/logout` | Logout, clear cookies |
+| POST | `/forgot-password` | Send password reset link |
+| POST | `/reset-password` | Reset password with token |
+| GET | `/profile` | Get logged-in user profile |
+| PUT | `/profile` | Update user profile |
+| POST | `/upload/audio` | Upload audio & cover image |
+| GET | `/stream/:id` | Stream audio by ID |
+| PUT | `/audio/:id` | Update audio details |
+| DELETE | `/audio/:id` | Delete audio |
+| GET | `/admin/users` | Admin: Get all users |
+| PUT | `/admin/users/:username` | Admin: Update user |
+| DELETE | `/admin/users/:username` | Admin: Deactivate user |
+| GET | `/admin/audios` | Admin: Get all audios |
+| DELETE | `/admin/audios/:id` | Admin: Delete audio |
+
+---
+
+## 🛡️ Auth Flow
+
+- Users get `accessToken` (1 hour) & `refreshToken` (7 days)
+- Use `accessToken` in `Authorization: Bearer TOKEN`
+- Use `/forgot-password` to send an email link
+- Reset with `/reset-password`
+
+---
+
+## 🔐 Upload Flow
+
+- Uses **Multer**
+- Endpoint: `/upload/audio`
+- FormData: `title`, `genre`, `audio` (file), `cover` (file), `isPrivate` (true/false)
+
+---
+
+## 🚀 For Frontend Devs
+
+- Use the **Postman collection** to test every request
+- Use variables: `{{base_url}}` for your server, `{{access_token}}` for auth routes
+- Audio streaming: call `/stream/:id` to get the audio file
+- Update & delete endpoints secured with auth
 
 ---
 
 ## 🤝 Contributing
 
-1. Fork it
-2. Create your feature branch: `git checkout -b feature/foo`
-3. Commit changes: `git commit -m 'Add new feature'`
-4. Push to branch: `git push origin feature/foo`
-5. Open a Pull Request
+Want to add new features?
+
+1. Fork the repo
+2. Create a new branch
+3. Make changes (keep PRs clean & scoped)
+4. Run `npm run lint` (if ESLint is configured)
+5. Submit a pull request!
 
 ---
 
-## 📝 License
+## 🧑‍💻 Maintainers
 
-MIT
+**Stream Flow Devs**  
+MIT License — Free to use & extend.
 
 ---
 
-## 👋 Author
+## ⚡ Quick Links
 
-**Zack River**  
-[GitHub](https://github.com/Zack-River)
+- 🧩 [Swagger Editor](https://editor.swagger.io/) — paste swagger.yaml
+- 🧩 [Postman](https://www.postman.com/) — import .json collection
+- 🧩 [Multer Docs](https://github.com/expressjs/multer)
+
+Happy coding & streaming! 🎶✨
