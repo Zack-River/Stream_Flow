@@ -23,7 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.get("/debug-files", (req, res) => {
-  const readmePath = path.join(__dirname, "README.md");
+  const readmePath = path.join(__dirname, "readme.md");
   const indexPath = path.join(__dirname, "public", "doc.html");
   const exists = {
     readme: fs.existsSync(readmePath),
@@ -35,7 +35,7 @@ app.get("/debug-files", (req, res) => {
 
 app.get("/doc", (req, res) => {
   try {
-    const readmePath = path.join(__dirname, "README.md");
+    const readmePath = path.join(__dirname, "readme.md");
     const indexPath = path.join(__dirname, "public", "doc.html");
     
     const readmeContent = fs.readFileSync(readmePath, "utf8");
