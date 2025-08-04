@@ -1,3 +1,7 @@
+// ============================
+// server/index.js (or server/app.js)
+// ============================
+
 const express = require("express");
 const connectDB = require("./config/db");
 const path = require("path");
@@ -24,16 +28,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ✅ Serve Static Assets
-app.use('/assets', express.static(path.join(__dirname, "public/assets")));
-app.use('/uploads', express.static(path.join(__dirname, "uploads")));
-app.use(express.static(path.join(__dirname, "..", "client"))); // Optional: serve client build if exists
+// Static assets first
+app.use("/assets", express.static(path.join(__dirname, "public/assets")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(express.static(path.join(__dirname, "..", "client")));
 
-// ✅ Custom README Markdown Doc Route
+// Documentation markdown route
 app.get("/doc", (req, res) => {
   try {
-    const readmePath = path.join(__dirname, "README.md"); // Lowercase!
-
+    const readmePath = path.join(__dirname, "README.md");
     const indexPath = path.join(__dirname, "public", "doc.html");
 
     const readmeContent = fs.readFileSync(readmePath, "utf8");
@@ -52,23 +55,19 @@ app.get("/doc", (req, res) => {
   }
 });
 
-// ✅ Swagger API Docs
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument, {
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "StreamFlow API Documentation",
-  })
-);
+// Swagger UI
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+  customCss: ".swagger-ui .topbar { display: none }",
+  customSiteTitle: "StreamFlow API Documentation",
+}));
 
-// ✅ API Routes
+// Routes
 app.use(adminRoutes);
 app.use(adminAudioRoutes);
 app.use(userRoutes);
 app.use("/audios", audioRoutes);
 
-// ✅ Error Handling Middleware
+// Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   if (res.headersSent) return next(err);
