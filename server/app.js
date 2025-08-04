@@ -57,7 +57,7 @@ app.get('/docs', (req, res) => {
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
   customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: "SoundWave API Documentation",
+  customSiteTitle: "StreamFlow API Documentation",
 }));
 app.use(adminRoutes);
 app.use(adminAudioRoutes);
