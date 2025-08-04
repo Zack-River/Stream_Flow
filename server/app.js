@@ -22,6 +22,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.get("/debug-files", (req, res) => {
+  const readmePath = path.join(__dirname, "README.md");
+  const indexPath = path.join(__dirname, "public", "doc.html");
+  const exists = {
+    readme: fs.existsSync(readmePath),
+    docHtml: fs.existsSync(indexPath),
+  };
+  res.json(exists);
+});
+
+
 app.get("/doc", (req, res) => {
   try {
     const readmePath = path.join(__dirname, "README.md");
