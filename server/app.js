@@ -35,7 +35,7 @@ app.get('/', (req, res) => {
     
     const htmlContent = marked(readmeContent);
     
-    const templatePath = path.join(__dirname, 'public', 'doc.html');
+    const templatePath = path.join(__dirname, 'public', 'index.html');
     let template = fs.readFileSync(templatePath, 'utf8');
     
     const finalHtml = template.replace('{{CONTENT}}', htmlContent);
