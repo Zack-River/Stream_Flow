@@ -29,17 +29,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Static assets first
-app.use("/public", express.static(path.join(__dirname, "public")));
 app.use("/assets", express.static(path.join(__dirname, "public/assets")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(express.static(path.join(__dirname, "..", "client")));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
 // Documentation markdown route
-app.get("/doc", (req, res) => {
+app.get("/", (req, res) => {
   try {
     const readmePath = path.join(__dirname, "README.md");
     const indexPath = path.join(__dirname, "public", "doc.html");
