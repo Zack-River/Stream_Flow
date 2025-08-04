@@ -88,9 +88,7 @@ exports.login = async function (req, res) {
 
     console.log("Incoming cookies:", req.cookies);
     const { email, password } = req.body;
-    const remember = req.body.remember === "on"; // ✅ make it boolean
-
-    console.log("Remember:", remember);
+    const remember = req.body.remember === "on";
 
     if (!email || !password) {
       return res.status(400).json({ message: "Email or Username and Password are required!" });

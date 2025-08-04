@@ -86,7 +86,7 @@ SoundWave/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/soundwave.git
+   git clone https://github.com/Zack-River/soundwave.git
    cd soundwave
    ```
 
@@ -331,8 +331,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - 📚 [API Documentation](swagger.yaml)
 - 🧪 [Postman Collection](SoundWave.postman_collection.json)
-- 🐛 [Report Issues](https://github.com/yourusername/soundwave/issues)
-- 💬 [Discussions](https://github.com/yourusername/soundwave/discussions)
+- 🐛 [Report Issues](https://github.com/Zack-River/soundwave/issues)
+- 💬 [Discussions](https://github.com/Zack-River/soundwave/discussions)
 
 ---
 

@@ -6,7 +6,7 @@ info:
     SoundWave is a full-featured audio streaming and management app.  
     This API provides user registration, authentication, audio uploads, streaming, and admin controls.
 servers:
-  - url: http://localhost:3000
+  - url: https://soundwave-api-n480.onrender.com
 
 tags:
   - name: Auth

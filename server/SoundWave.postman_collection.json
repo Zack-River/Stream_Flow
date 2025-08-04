@@ -260,7 +260,7 @@
     }
   ],
   "variable": [
-    { "key": "base_url", "value": "http://localhost:3000" },
+    { "key": "base_url", "value": "https://soundwave-api-n480.onrender.com" },
     { "key": "access_token", "value": "" },
     { "key": "audio_id", "value": "" },
     { "key": "username", "value": "" }
