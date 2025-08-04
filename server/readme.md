@@ -1,6 +1,6 @@
-# 🎵 SoundWave
+# 🎵 Stream Flow
 
-**SoundWave** is a full-stack **Node.js + Express + MongoDB** audio streaming app — with secure **JWT auth**, **role-based access**, audio **upload**, **streaming**, and a robust **admin panel**.
+**Stream Flow** is a full-stack **Node.js + Express + MongoDB** audio streaming app — with secure **JWT auth**, **role-based access**, audio **upload**, **streaming**, and a robust **admin panel**.
 
 It’s fully documented with **Swagger** and a **Postman collection** so frontend devs can integrate instantly.
 
@@ -23,14 +23,14 @@ It’s fully documented with **Swagger** and a **Postman collection** so fronten
 
 ## 📁 Folder Structure
 
-SoundWave/
+Stream Flow/
 ├─ controllers/ # Route logic (auth, audio, admin)
 ├─ models/ # Mongoose schemas (User, Audio)
 ├─ routes/ # API route definitions
 ├─ utils/ # Helpers: JWT, hash, mailer, cookies
 ├─ uploads/ # Uploaded audio files + covers
 ├─ swagger.yaml # OpenAPI documentation
-├─ SoundWave.postman_collection.json
+├─ Stream Flow.postman_collection.json
 ├─ .env # Environment secrets
 ├─ server.js # Entry point
 
@@ -45,8 +45,8 @@ Edit
 1️⃣ **Clone**
 
 ```bash
-git clone https://github.com/yourusername/soundwave.git
-cd soundwave
+git clone https://github.com/Zack-River/Ghanily_Music_App.git
+cd Ghanily_Music_App
 
 2️⃣ Install
 
@@ -58,7 +58,7 @@ npm install
 
 Create a .env file:
 PORT=3000
-MONGO_URI=mongodb://localhost:27017/soundwave
+MONGO_URI=mongodb://localhost:27017/Ghanily_Music_App
 ACCESS_SECRET=YourAccessSecret
 REFRESH_SECRET=YourRefreshSecret
 RESET_SECRET=YourResetSecret
@@ -86,7 +86,7 @@ Swagger UI: Open the swagger.yaml in Swagger Editor — or serve with tools like
 
 Postman:
 
-Import SoundWave.postman_collection.json into Postman.
+Import Stream Flow.postman_collection.json into Postman.
 
 Set {{base_url}} to your local URL.
 
@@ -148,7 +148,7 @@ Want to add new features?
 5️⃣ Submit a pull request!
 
 🧑‍💻 Maintainers
-SoundWave Devs
+Stream Flow Devs
 MIT License — Free to use & extend.
 
 ⚡ Quick Links
@@ -171,7 +171,7 @@ Edit
 I can pack this up as:
 - `README.md`
 - `swagger.yaml`
-- `SoundWave.postman_collection.json`
+- `Stream Flow.postman_collection.json`
 
 Just say **“Package it!”** and I’ll generate a **ready-to-download zip** for you! 🚀
 

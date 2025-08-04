@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "b1234567-89ab-cdef-0123-456789abcdef",
-    "name": "SoundWave API",
-    "description": "Complete Postman Collection for SoundWave — Audio Upload, Streaming, User Auth, Admin Control. Use `{{base_url}}` for server URL and `{{access_token}}` for protected routes.",
+    "name": "Stream Flow API",
+    "description": "Complete Postman Collection for Stream Flow — Audio Upload, Streaming, User Auth, Admin Control. Use `{{base_url}}` for server URL and `{{access_token}}` for protected routes.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

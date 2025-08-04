@@ -1,4 +1,4 @@
-# 🎵 SoundWave
+# 🎵 Stream Flow
 
 **A full-stack audio streaming platform built with Node.js, Express, and MongoDB**
 
@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![API Documentation](https://img.shields.io/badge/API-Swagger-orange.svg)](swagger.yaml)
 
-SoundWave is a robust, production-ready audio streaming application featuring secure JWT authentication, role-based access control, file upload capabilities, and comprehensive admin tools. Built with modern best practices and fully documented APIs.
+Stream Flow is a robust, production-ready audio streaming application featuring secure JWT authentication, role-based access control, file upload capabilities, and comprehensive admin tools. Built with modern best practices and fully documented APIs.
 
 ---
 
@@ -45,7 +45,7 @@ SoundWave is a robust, production-ready audio streaming application featuring se
 ## 🏗️ Architecture
 
 ```
-SoundWave/
+Stream Flow/
 ├── 📁 controllers/          # Business logic & route handlers
 │   ├── authController.js    # Authentication logic
 │   ├── audioController.js   # Audio management
@@ -67,7 +67,7 @@ SoundWave/
 │   └── covers/             # Cover images
 ├── 📁 docs/                # Documentation
 │   ├── swagger.yaml        # API specification
-│   └── SoundWave.postman_collection.json
+│   └── Stream Flow.postman_collection.json
 ├── .env.example            # Environment template
 ├── server.js               # Application entry point
 └── package.json            # Dependencies & scripts
@@ -86,8 +86,8 @@ SoundWave/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Zack-River/soundwave.git
-   cd soundwave
+   git clone https://github.com/Zack-River/Ghanily_Music_App.git
+   cd Ghanily_Music_App
    ```
 
 2. **Install dependencies**
@@ -107,7 +107,7 @@ SoundWave/
    NODE_ENV=development
    
    # Database
-   MONGO_URI=mongodb://localhost:27017/soundwave
+   MONGO_URI=mongodb://localhost:27017/Ghanily_Music_App
    
    # JWT Secrets (Generate strong secrets for production)
    ACCESS_SECRET=your-super-secure-access-secret
@@ -144,7 +144,7 @@ SoundWave/
 
 ### Interactive Documentation
 - **Swagger UI**: Import `swagger.yaml` into [Swagger Editor](https://editor.swagger.io/)
-- **Postman**: Import `SoundWave.postman_collection.json` for instant testing
+- **Postman**: Import `Stream Flow.postman_collection.json` for instant testing
 
 ### Authentication Flow
 
@@ -201,7 +201,7 @@ sequenceDiagram
 
 ## 🧪 Testing with Postman
 
-1. **Import the collection**: `SoundWave.postman_collection.json`
+1. **Import the collection**: `Stream Flow.postman_collection.json`
 
 2. **Set up environment variables**:
    - `base_url`: `http://localhost:3000`
@@ -297,7 +297,7 @@ All API responses follow a consistent format:
 ```bash
 NODE_ENV=production
 PORT=80
-MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/soundwave
+MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/Stream Flow
 # ... other production configs
 ```
 
@@ -330,9 +330,9 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ## 🔗 Resources
 
 - 📚 [API Documentation](swagger.yaml)
-- 🧪 [Postman Collection](SoundWave.postman_collection.json)
-- 🐛 [Report Issues](https://github.com/Zack-River/soundwave/issues)
-- 💬 [Discussions](https://github.com/Zack-River/soundwave/discussions)
+- 🧪 [Postman Collection](Stream Flow.postman_collection.json)
+- 🐛 [Report Issues](https://github.com/Zack-River/Ghanily_Music_App/issues)
+- 💬 [Discussions](https://github.com/Zack-River/Ghanily_Music_App/discussions)
 
 ---
 
@@ -349,4 +349,4 @@ Built with ❤️ using:
 
 **Happy coding and streaming! 🎶✨**
 
-> Made with ❤️ by the SoundWave team
+> Made with ❤️ by the Stream Flow team

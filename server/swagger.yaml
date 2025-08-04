@@ -1,12 +1,12 @@
 openapi: 3.0.3
 info:
-  title: SoundWave API
+  title: Stream Flow API
   version: 1.0.0
   description: >
-    SoundWave is a full-featured audio streaming and management app.  
+    Stream Flow is a full-featured audio streaming and management app.  
     This API provides user registration, authentication, audio uploads, streaming, and admin controls.
 servers:
-  - url: https://soundwave-api-n480.onrender.com
+  - url: https://SoundWave-api-n480.onrender.com
 
 tags:
   - name: Auth
