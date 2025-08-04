@@ -1,4 +1,4 @@
-
+    
 # 🎵 Ghanily Music App
 
 **Ghanily** is a full-stack music streaming application where users can register, log in, upload tracks, and stream music.  
