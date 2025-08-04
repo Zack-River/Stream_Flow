@@ -22,16 +22,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.get("/debug-files", (req, res) => {
-  const readmePath = path.join(__dirname, "readme.md");
-  const indexPath = path.join(__dirname, "public", "doc.html");
-  const exists = {
-    readme: fs.existsSync(readmePath),
-    docHtml: fs.existsSync(indexPath),
-  };
-  res.json(exists);
-});
-
+app.use('/static', express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "..", "client")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
   try {
@@ -57,10 +50,6 @@ app.get("/", (req, res) => {
     });
   }
 });
-
-app.use('/static', express.static(path.join(__dirname, "public")));
-app.use(express.static(path.join(__dirname, "..", "client")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(
   "/api-docs",
