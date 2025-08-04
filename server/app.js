@@ -29,8 +29,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Static assets first
-app.use("/assets", express.static(path.join(__dirname, "public/assets")));
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "uploads")));
 
 // Documentation markdown route
 app.get("/", (req, res) => {
