@@ -36,21 +36,19 @@ exports.register = async function (req, res) {
     }
 
     await newUser.save();
-
-    // res.status(201).json({
-    //   message: "User Created Successfully!",
-    //   user: {
-    //     id: newUser._id,
-    //     name: newUser.name,
-    //     username: newUser.username,
-    //     email: newUser.email,
-    //     role: newUser.role,
-    //     profileImg: newUser.profileImg,
-    //     createdAt: newUser.createdAt,
-    //   },
-    // });
-
-    return res.redirect('/login');
+    
+    return res.status(201).json({
+      message: "User Created Successfully!",
+      user: {
+        id: newUser._id,
+        name: newUser.name,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role,
+        profileImg: newUser.profileImg,
+        createdAt: newUser.createdAt,
+      },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Internal Server Error" });
@@ -96,9 +94,17 @@ exports.login = async function (req, res) {
 
     const normalizedEmail = email.toLowerCase();
 
-    const user = await User.findOne({
+     const user = await User.findOne({
       $or: [{ email: normalizedEmail }, { username: email }]
     }).select("+password");
+
+    if (!user || !(await hash.comparePassword(password, user.password))) {
+      return res.status(400).json({ message: "Wrong Email / Username or Password!" });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: "Account is deactivated!" });
+    }
 
     if (!user || !(await hash.comparePassword(password, user.password))) {
       return res.status(400).json({ message: "Wrong Email / Username or Password!" });
@@ -118,11 +124,10 @@ exports.login = async function (req, res) {
     user.lastLogin = Date.now();
     await user.save();
 
-    // res.status(200).json({
-    //   message: "Logged In successfully.",
-    //   accessToken: newAccessToken,
-    // });
-    return res.redirect('/');
+    return res.status(200).json({
+      message: "Logged In successfully.",
+      accessToken: newAccessToken,
+    });
 
   } catch (err) {
     console.error(err);
@@ -148,7 +153,7 @@ exports.forgetPassword = async function (req, res) {
   }
 
   const resetToken = jwt.generateResetToken(user);
-  const resetLink = `http://localhost:3000/user/reset-password?resetToken=${resetToken}`;
+  const resetLink = `https://soundwave-api-n480.onrender.com/user/reset-password?resetToken=${resetToken}`;
 
   cookieHelper.setResetCookie(res, resetToken);
 
@@ -194,7 +199,7 @@ exports.resetPassword = async function (req, res) {
 
     cookieHelper.clearResetCookie(res);
 
-    res.json({ message: "Password reset successfully!" });
+    res.status(200).json({ message: "Password reset successfully!" });
 
   } catch (err) {
     console.error(err);
@@ -213,9 +218,12 @@ exports.refreshAccessToken = async function (req, res) {
 
     const newAccessToken = jwt.generateAccessToken(user);
 
-    cookieHelperHelper.setAccessTokenCookie(res, newAccessToken);
+    cookieHelper.setAccessTokenCookie(res, newAccessToken);
 
-    res.json({ accessToken: newAccessToken });
+    return res.status(200).json({
+      message: "Access token refreshed successfully.",
+      accessToken: newAccessToken
+    });
 
   } catch (err) {
     console.error(err);
@@ -226,8 +234,7 @@ exports.refreshAccessToken = async function (req, res) {
 exports.logout = async function (req, res) {
   try {
     cookieHelper.clearAuthCookies(res);
-    // return res.status(200).json({ message: 'Logged out successfully.' });
-    return res.redirect('/login');
+    return res.status(200).json({ message: 'Logged out successfully.' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Something went wrong while logging out.' });

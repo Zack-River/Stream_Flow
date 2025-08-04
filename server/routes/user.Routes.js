@@ -21,32 +21,16 @@ router.get('/force-new-token', async (req, res) => {
   });
   res.send({ message: 'New refresh token set!', refreshToken });
 });
-router.get('/login', (req, res) => {
-  if (req.isAuthenticated) {
-    return res.redirect('/');
-  }
-  return res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
-});
 
-router.get('/register', (req, res) => {
-  if (req.isAuthenticated) {
-    return res.redirect('/');
-  }
-  return res.sendFile(path.join(__dirname, '..', 'public', 'login.html'));
-});
 router.post('/register', upload.single('profileImg'), registerValidator ,validateRequest ,authController.register);
 router.post('/login', loginValidator, validateRequest, authController.login);
 router.post('/forget-password', authController.forgetPassword);
 router.post('/reset-password', authController.resetPassword);
 router.get('/logout', authController.logout);
 
-router.get('/profile' , checkAuthenticated, (req,res) => {
-  return res.sendFile(path.join(__dirname, '..', 'public', 'profile.html'));
-});
-
-router.get('/settings' , checkAuthenticated, (req,res) => {
-  return res.sendFile(path.join(__dirname, '..', 'public', 'edit-profile.html'));
-});
+// router.get('/settings' , checkAuthenticated, (req,res) => {
+//   return res.sendFile(path.join(__dirname, '..', 'public', 'edit-profile.html'));
+// });
 
 router.get('/profile/data', checkAuthenticated, userController.showProfile);
 router.put('/profile', upload.single('profileImg'), checkAuthenticated, userController.editProfile);

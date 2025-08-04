@@ -14,10 +14,10 @@ const {
   deleteAudio
 } = require("../controllers/audio.Controller");
 
-// Upload page (HTML)
-router.get('/upload', checkAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'public', 'upload-audio.html'));
-});
+// // Upload page (HTML)
+// router.get('/upload', checkAuthenticated, (req, res) => {
+//   res.sendFile(path.join(__dirname, '..', 'public', 'upload-audio.html'));
+// });
 
 // ✅ Final upload route — matches your fetch
 router.post(
