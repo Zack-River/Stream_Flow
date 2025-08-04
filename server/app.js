@@ -23,6 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 /** ✅ MUST BE BEFORE static middlewares **/
+app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (req, res) => {
   try {
     const readmePath = path.join(__dirname, "README.md");
@@ -47,7 +48,6 @@ app.get("/", (req, res) => {
   }
 });
 
-app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "..", "client")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
