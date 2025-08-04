@@ -6,7 +6,7 @@ info:
     Stream Flow is a full-featured audio streaming and management app.  
     This API provides user registration, authentication, audio uploads, streaming, and admin controls.
 servers:
-  - url: https://SoundWave-api-n480.onrender.com
+  - url: https://stream-flow-api.onrender.com
 
 tags:
   - name: Auth
