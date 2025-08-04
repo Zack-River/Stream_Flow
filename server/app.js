@@ -22,22 +22,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-/** ✅ MUST BE BEFORE static middlewares **/
-app.use(express.static(path.join(__dirname, "public")));
-app.get("/", (req, res) => {
+app.get("/doc", (req, res) => {
   try {
     const readmePath = path.join(__dirname, "README.md");
-    const indexPath = path.join(__dirname, "public", "index.html");
-
-    console.log("📄 README path:", readmePath);
-    console.log("🧾 index.html path:", indexPath);
-
+    const indexPath = path.join(__dirname, "public", "doc.html");
+    
     const readmeContent = fs.readFileSync(readmePath, "utf8");
     const htmlContent = marked(readmeContent);
     const template = fs.readFileSync(indexPath, "utf8");
-
+    
     const finalHtml = template.replace("{{CONTENT}}", htmlContent);
-
     res.send(finalHtml);
   } catch (error) {
     console.error("Error serving documentation:", error);
@@ -48,6 +42,8 @@ app.get("/", (req, res) => {
   }
 });
 
+// Static middlewares AFTER custom routes
+app.use('/static', express.static(path.join(__dirname, "public")));  // Serve at /static/*
 app.use(express.static(path.join(__dirname, "..", "client")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
