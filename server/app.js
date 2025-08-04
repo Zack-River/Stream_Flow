@@ -33,10 +33,10 @@ app.get("/debug-files", (req, res) => {
 });
 
 
-app.get("/doc", (req, res) => {
+app.get("/", (req, res) => {
   try {
     const readmePath = path.join(__dirname, "README.md");
-    const indexPath = path.join(__dirname, "public", "doc.html");
+    const indexPath = path.join(__dirname, "public", "index.html");
 
     const readmeContent = fs.readFileSync(readmePath, "utf8");
     const htmlContent = marked(readmeContent);
@@ -58,8 +58,7 @@ app.get("/doc", (req, res) => {
   }
 });
 
-// Static middlewares AFTER custom routes
-app.use('/static', express.static(path.join(__dirname, "public")));  // Serve at /static/*
+app.use('/static', express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "..", "client")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
