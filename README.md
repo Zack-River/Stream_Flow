@@ -1,7 +1,7 @@
     
-# 🎵 Ghanily Music App
+# 🎵 Stream Flow Music App
 
-**Ghanily** is a full-stack music streaming application where users can register, log in, upload tracks, and stream music.  
+**Stream Flow** is a full-stack music streaming application where users can register, log in, upload tracks, and stream music.  
 Built with **Node.js**, **Express**, **MongoDB**, and structured for easy integration with a modern frontend (React, Next.js, or any SPA).
 
 ---
@@ -58,8 +58,8 @@ client/
 
 ```bash
 # Clone the repository
-git clone https://github.com/Zack-River/Ghanily_Music_App.git
-cd Ghanily_Music_App
+git clone https://github.com/Zack-River/Stream_Flow.git
+cd Stream_Flow
 
 # Install dependencies
 npm install
