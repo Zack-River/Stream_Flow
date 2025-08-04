@@ -28,12 +28,15 @@ app.get("/", (req, res) => {
     const readmePath = path.join(__dirname, "README.md");
     const indexPath = path.join(__dirname, "public", "index.html");
 
+    console.log("📄 README path:", readmePath);
+    console.log("🧾 index.html path:", indexPath);
+
     const readmeContent = fs.readFileSync(readmePath, "utf8");
     const htmlContent = marked(readmeContent);
     const template = fs.readFileSync(indexPath, "utf8");
 
     const finalHtml = template.replace("{{CONTENT}}", htmlContent);
-    
+
     res.send(finalHtml);
   } catch (error) {
     console.error("Error serving documentation:", error);
@@ -44,7 +47,6 @@ app.get("/", (req, res) => {
   }
 });
 
-/** ✅ Static files now come after "/" **/
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.static(path.join(__dirname, "..", "client")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
