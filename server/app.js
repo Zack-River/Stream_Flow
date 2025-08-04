@@ -22,27 +22,22 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// ✅ Serve *all static files* from /public and /uploads
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, '..' , 'client')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 
 // ✅ Routes
-app.get('/docs', (req, res) => {
+app.get('/', (req, res) => {
   try {
-    // Read the README.md file
     const readmePath = path.join(__dirname, 'readme.md');
     const readmeContent = fs.readFileSync(readmePath, 'utf8');
     
-    // Convert markdown to HTML
     const htmlContent = marked(readmeContent);
     
-    // Read the HTML template
     const templatePath = path.join(__dirname, 'public', 'doc.html');
     let template = fs.readFileSync(templatePath, 'utf8');
     
-    // Replace placeholder with content
     const finalHtml = template.replace('{{CONTENT}}', htmlContent);
     
     res.send(finalHtml);
@@ -64,11 +59,6 @@ app.use(adminAudioRoutes);
 app.use(userRoutes);
 app.use('/audios',audioRoutes);
 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// ✅ Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   if (res.headersSent) {
