@@ -46,7 +46,7 @@ export default function UploadsPage() {
             {isEditMode ? (
               <button
                 onClick={handleCancelEdit}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200"
+                className="btn-ghost flex items-center space-x-2 px-4 py-2 rounded-xl"
               >
                 <X className="w-4 h-4" />
                 <span>Cancel</span>
@@ -54,7 +54,7 @@ export default function UploadsPage() {
             ) : (
               <button
                 onClick={() => setIsEditMode(true)}
-                className="flex items-center space-x-2 px-4 py-2 cursor-pointer text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200"
+                className="btn-ghost flex items-center space-x-2 px-4 py-2 cursor-pointer rounded-xl hover:text-purple-600 dark:hover:text-purple-400"
                 disabled={songs.length === 0}
               >
                 <Edit2 className="w-4 h-4" />

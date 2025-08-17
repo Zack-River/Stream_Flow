@@ -57,7 +57,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
       }}
     >
       <div
-        className={`bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl mt-8 transform transition-all duration-300 ${
+        className={`card rounded-2xl w-full max-w-md shadow-2xl mt-8 transform transition-all duration-300 ${
           isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -66,9 +66,9 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Playlist</h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="btn-ghost p-2 rounded-lg"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -82,7 +82,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter playlist name"
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm dark:text-white placeholder-gray-400"
+              className="input-primary w-full px-3 py-2 rounded-lg text-sm placeholder-gray-400"
               autoFocus
               required
             />
@@ -97,14 +97,14 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a description for your playlist"
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm dark:text-white placeholder-gray-400 resize-none"
+              className="input-primary w-full px-3 py-2 rounded-lg text-sm placeholder-gray-400 resize-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={!name.trim()}
-            className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="btn-primary w-full py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Save Changes
           </button>
@@ -138,7 +138,7 @@ const DeletePlaylistModal = ({ isOpen, onClose, playlist, onConfirmDelete }) => 
       }}
     >
       <div 
-        className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 max-w-xs sm:max-w-sm w-full shadow-2xl"
+        className="card rounded-2xl p-4 sm:p-6 max-w-xs sm:max-w-sm w-full shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
@@ -158,7 +158,7 @@ const DeletePlaylistModal = ({ isOpen, onClose, playlist, onConfirmDelete }) => 
         <div className="flex space-x-2 sm:space-x-3">
           <button
             onClick={onClose}
-            className="flex-1 px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs sm:text-sm font-medium"
+            className="btn-secondary flex-1 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium"
           >
             Cancel
           </button>
@@ -236,7 +236,7 @@ export default function PlaylistPage() {
           <div className="flex items-center space-x-2 ml-4">
             <button
               onClick={() => setShowEditModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200"
+              className="btn-ghost flex items-center space-x-2 px-4 py-2 rounded-xl hover:text-purple-600 dark:hover:text-purple-400"
               title="Edit playlist"
             >
               <Edit2 className="w-4 h-4" />
@@ -244,7 +244,7 @@ export default function PlaylistPage() {
             </button>
             <button
               onClick={handleDeleteClick}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-all duration-200"
+              className="btn-ghost flex items-center space-x-2 px-4 py-2 rounded-xl hover:text-red-600 dark:hover:text-red-400"
               title="Delete playlist"
             >
               <Trash2 className="w-4 h-4" />
