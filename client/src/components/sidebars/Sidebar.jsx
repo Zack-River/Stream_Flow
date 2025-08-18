@@ -118,11 +118,6 @@ const CreatePlaylistModal = ({ isOpen, onClose, onCreatePlaylist }) => {
           >
             Create Playlist
           </button>
-          {!name.trim() && (
-            <p id="playlist-name-required" className="text-sm text-red-600 dark:text-red-400">
-              Playlist name is required
-            </p>
-          )}
         </form>
       </div>
     </div>
