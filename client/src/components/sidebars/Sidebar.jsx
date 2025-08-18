@@ -13,13 +13,6 @@ const CreatePlaylistModal = ({ isOpen, onClose, onCreatePlaylist }) => {
   useEffect(() => {
     if (isOpen) {
       setIsVisible(true)
-      // Prevent body scroll when modal is open
-      document.body.style.overflow = 'hidden'
-    }
-    
-    // Cleanup function to restore scroll when component unmounts
-    return () => {
-      document.body.style.overflow = 'unset'
     }
   }, [isOpen])
 
@@ -35,8 +28,6 @@ const CreatePlaylistModal = ({ isOpen, onClose, onCreatePlaylist }) => {
 
   const handleClose = () => {
     setIsVisible(false)
-    // Restore body scroll before closing
-    document.body.style.overflow = 'unset'
     setTimeout(() => {
       setName("")
       setDescription("")
