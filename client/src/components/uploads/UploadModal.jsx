@@ -102,13 +102,14 @@ export default function UploadModal({ onClose, editSong = null }) {
     }
   }
 
-  // Cover image handler
   const handleCoverSelect = (e) => {
     const file = e.target.files[0]
     if (file && file.type.startsWith("image/")) {
       setSelectedCover(file)
       const reader = new FileReader()
-      reader.onload = (e) => setCoverPreview(e.target.result)
+      reader.onload = (e) => {
+        setCoverPreview(e.target.result)
+      }
       reader.readAsDataURL(file)
     }
   }
@@ -125,74 +126,45 @@ export default function UploadModal({ onClose, editSong = null }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!formData.title || !formData.artist) return
-
-    // In edit mode, we don't need a file unless we're replacing it
-    if (!isEditMode && !selectedFile) return
-    if (isEditMode && replaceAudioFile && !selectedFile) return
-
     setIsUploading(true)
 
     try {
+      let audioUrl = null
+      let duration = "0:00"
+
+      // Handle audio file processing
+      if (selectedFile) {
+        audioUrl = URL.createObjectURL(selectedFile)
+        duration = await getAudioDuration(selectedFile)
+      } else if (isEditMode && editSong) {
+        // In edit mode, keep existing audio if not replacing
+        audioUrl = editSong.url
+        duration = editSong.duration
+      }
+
+      const songData = {
+        id: isEditMode ? editSong.id : Date.now().toString(),
+        title: formData.title,
+        artist: formData.artist,
+        album: formData.album,
+        duration: duration,
+        cover: coverPreview || editSong?.cover,
+        url: audioUrl,
+        isUploaded: true,
+      }
+
       if (isEditMode) {
-        // Update existing song
-        const updatedData = {
-          title: formData.title,
-          artist: formData.artist,
-          album: formData.album || "Unknown Album",
-        }
-
-        // If a new cover was selected, update it
-        if (selectedCover) {
-          updatedData.cover = URL.createObjectURL(selectedCover)
-        }
-
-        // If user chose to replace the audio file
-        if (replaceAudioFile && selectedFile) {
-          const audioUrl = URL.createObjectURL(selectedFile)
-          const duration = await getAudioDuration(selectedFile)
-          updatedData.url = audioUrl
-          updatedData.duration = duration
-          
-          // Clean up the old audio URL to prevent memory leaks
-          if (editSong.url && editSong.url.startsWith('blob:')) {
-            URL.revokeObjectURL(editSong.url)
-          }
-        }
-
-        dispatch({ 
-          type: "UPDATE_UPLOAD", 
-          payload: { id: editSong.id, updates: updatedData } 
-        })
+        dispatch({ type: "UPDATE_UPLOAD", payload: songData })
       } else {
-        // Create new song (original upload logic)
-        const audioUrl = URL.createObjectURL(selectedFile)
-        const duration = await getAudioDuration(selectedFile)
-
-        const coverUrl = selectedCover
-          ? URL.createObjectURL(selectedCover)
-          : "https://placehold.co/200x200/EFEFEF/AAAAAA?text=Song+Cover"
-
-        const newSong = {
-          id: Date.now(),
-          title: formData.title,
-          artist: formData.artist,
-          album: formData.album || "Unknown Album",
-          duration: duration,
-          cover: coverUrl,
-          url: audioUrl,
-          isUploaded: true,
-        }
-
-        dispatch({ type: "ADD_UPLOAD", payload: newSong })
+        dispatch({ type: "ADD_UPLOAD", payload: songData })
       }
 
       setUploadSuccess(true)
       setTimeout(() => {
         handleClose()
-      }, 1500)
+      }, 2000)
     } catch (error) {
-      console.error(isEditMode ? "Update error:" : "Upload error:", error)
+      console.error("Upload error:", error)
     } finally {
       setIsUploading(false)
     }
@@ -202,7 +174,7 @@ export default function UploadModal({ onClose, editSong = null }) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4">
         <div
-          className={`bg-white dark:bg-gray-800 rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center mt-20 transform transition-all duration-300 ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+          className={`card rounded-2xl p-8 max-w-sm w-full shadow-2xl text-center mt-20 transform transition-all duration-300 ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
             }`}
         >
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
@@ -230,7 +202,7 @@ export default function UploadModal({ onClose, editSong = null }) {
       }}
     >
       <div
-        className={`bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md shadow-2xl mt-8 transform transition-all duration-300 ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        className={`card rounded-2xl w-full max-w-md shadow-2xl mt-8 transform transition-all duration-300 ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
           }`}
         onClick={(e) => e.stopPropagation()}
       >
@@ -240,7 +212,7 @@ export default function UploadModal({ onClose, editSong = null }) {
           </h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="btn-ghost p-2 rounded-lg"
             disabled={isUploading}
           >
             <X className="w-5 h-5" />
@@ -277,7 +249,7 @@ export default function UploadModal({ onClose, editSong = null }) {
                   </div>
                   <button
                     type="button"
-                    className="bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-xs"
+                    className="btn-primary px-3 py-2 rounded-lg text-xs"
                   >
                     Choose Cover
                   </button>
@@ -366,7 +338,7 @@ export default function UploadModal({ onClose, editSong = null }) {
                       <button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
-                        className="bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-xs"
+                        className="btn-primary px-3 py-2 rounded-lg text-xs"
                       >
                         Choose File
                       </button>
@@ -406,7 +378,7 @@ export default function UploadModal({ onClose, editSong = null }) {
                 type="text"
                 value={formData.title}
                 onChange={(e) => setFormData((prev) => ({ ...prev, title: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                className="input-primary w-full px-3 py-2 rounded-lg text-sm"
                 required
                 disabled={isUploading}
               />
@@ -418,7 +390,7 @@ export default function UploadModal({ onClose, editSong = null }) {
                 type="text"
                 value={formData.artist}
                 onChange={(e) => setFormData((prev) => ({ ...prev, artist: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                className="input-primary w-full px-3 py-2 rounded-lg text-sm"
                 required
                 disabled={isUploading}
               />
@@ -430,7 +402,7 @@ export default function UploadModal({ onClose, editSong = null }) {
                 type="text"
                 value={formData.album}
                 onChange={(e) => setFormData((prev) => ({ ...prev, album: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                className="input-primary w-full px-3 py-2 rounded-lg text-sm"
                 disabled={isUploading}
               />
             </div>
@@ -445,7 +417,7 @@ export default function UploadModal({ onClose, editSong = null }) {
               (isEditMode && replaceAudioFile && !selectedFile) ||
               isUploading
             }
-            className="w-full bg-purple-500 text-white py-3 rounded-lg font-medium hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="btn-primary w-full py-3 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isUploading 
               ? (isEditMode ? "Updating..." : "Uploading...") 

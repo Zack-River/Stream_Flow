@@ -4,48 +4,119 @@
 
 @layer base {
     :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 3.9%;
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 3.9%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 3.9%;
-        --primary: 0 0% 9%;
-        --primary-foreground: 0 0% 98%;
-        --secondary: 0 0% 96.1%;
-        --secondary-foreground: 0 0% 9%;
-        --muted: 0 0% 96.1%;
-        --muted-foreground: 0 0% 45.1%;
-        --accent: 0 0% 96.1%;
-        --accent-foreground: 0 0% 9%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 89.8%;
-        --input: 0 0% 89.8%;
-        --ring: 0 0% 3.9%;
+        /* Unified Color System - Matching Original Visual Colors */
+        --primary: 262 83% 58%; /* Purple-500 - Keep original purple */
+        --primary-hover: 262 83% 48%; /* Purple-600 */
+        --primary-light: 262 83% 88%; /* Purple-100 */
+        --primary-dark: 262 83% 38%; /* Purple-700 */
+        
+        --secondary: 220 14% 96%; /* Gray-100 */
+        --secondary-hover: 220 14% 86%; /* Gray-200 */
+        --secondary-dark: 220 14% 14%; /* Gray-800 */
+        --secondary-darker: 220 14% 9%; /* Gray-900 */
+        
+        --accent: 217 91% 60%; /* Blue-500 */
+        --accent-hover: 217 91% 50%; /* Blue-600 */
+        --accent-light: 217 91% 90%; /* Blue-100 */
+        
+        --success: 142 76% 36%; /* Green-600 */
+        --success-light: 142 76% 86%; /* Green-100 */
+        
+        --warning: 38 92% 50%; /* Yellow-500 */
+        --warning-light: 38 92% 90%; /* Yellow-100 */
+        
+        --destructive: 0 84% 60%; /* Red-500 */
+        --destructive-hover: 0 84% 50%; /* Red-600 */
+        --destructive-light: 0 84% 90%; /* Red-100 */
+        
+        /* Background Colors - Keep Original */
+        --background: 0 0% 100%; /* White */
+        --background-secondary: 249 100% 98%; /* Gray-50 */
+        --background-tertiary: 220 14% 96%; /* Gray-100 */
+        
+        /* Text Colors - Keep Original */
+        --foreground: 220 14% 9%; /* Gray-900 */
+        --foreground-secondary: 220 14% 45%; /* Gray-600 */
+        --foreground-muted: 220 14% 63%; /* Gray-500 */
+        --foreground-disabled: 220 14% 75%; /* Gray-400 */
+        
+        /* Border Colors - Keep Original */
+        --border: 220 14% 90%; /* Gray-200 */
+        --border-secondary: 220 14% 85%; /* Gray-300 */
+        --border-muted: 220 14% 95%; /* Gray-100 */
+        
+        /* Card Colors - Keep Original */
+        --card: 0 0% 100%; /* White */
+        --card-foreground: 220 14% 9%; /* Gray-900 */
+        
+        /* Input Colors - Keep Original */
+        --input: 220 14% 96%; /* Gray-100 */
+        --input-border: 220 14% 90%; /* Gray-200 */
+        --input-focus: 262 83% 58%; /* Purple-500 */
+        
+        /* Ring Colors */
+        --ring: 262 83% 58%; /* Purple-500 */
+        
+        /* Radius */
         --radius: 0.5rem;
+        --radius-lg: 0.75rem;
+        --radius-xl: 1rem;
+        --radius-2xl: 1.5rem;
     }
 
     .dark {
-        --background: 0 0% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 0 0% 3.9%;
-        --card-foreground: 0 0% 98%;
-        --popover: 0 0% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 0 0% 98%;
-        --primary-foreground: 0 0% 9%;
-        --secondary: 0 0% 14.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 0 0% 14.9%;
-        --muted-foreground: 0 0% 63.9%;
-        --accent: 0 0% 14.9%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 62.8% 30.6%;
-        --destructive-foreground: 0 0% 98%;
-        --border: 0 0% 14.9%;
-        --input: 0 0% 14.9%;
-        --ring: 0 0% 83.1%;
+        /* Dark Mode Color System - Keep Original Dark Colors */
+        --primary: 262 83% 58%; /* Purple-500 - Keep same purple */
+        --primary-hover: 262 83% 68%; /* Purple-400 */
+        --primary-light: 262 83% 20%; /* Purple-900 */
+        --primary-dark: 262 83% 78%; /* Purple-300 */
+        
+        --secondary: 220 14% 14%; /* Gray-800 */
+        --secondary-hover: 220 14% 24%; /* Gray-700 */
+        --secondary-dark: 220 14% 9%; /* Gray-900 */
+        --secondary-darker: 220 14% 4%; /* Gray-950 */
+        
+        --accent: 217 91% 60%; /* Blue-500 */
+        --accent-hover: 217 91% 70%; /* Blue-400 */
+        --accent-light: 217 91% 20%; /* Blue-900 */
+        
+        --success: 142 76% 36%; /* Green-600 */
+        --success-light: 142 76% 20%; /* Green-900 */
+        
+        --warning: 38 92% 50%; /* Yellow-500 */
+        --warning-light: 38 92% 20%; /* Yellow-900 */
+        
+        --destructive: 0 84% 60%; /* Red-500 */
+        --destructive-hover: 0 84% 70%; /* Red-400 */
+        --destructive-light: 0 84% 20%; /* Red-900 */
+        
+        /* Background Colors - Keep Original Dark */
+        --background: 220 14% 9%; /* Gray-900 */
+        --background-secondary: 220 14% 14%; /* Gray-800 */
+        --background-tertiary: 220 14% 19%; /* Gray-700 */
+        
+        /* Text Colors - Keep Original Dark */
+        --foreground: 220 14% 98%; /* Gray-50 */
+        --foreground-secondary: 220 14% 82%; /* Gray-200 */
+        --foreground-muted: 220 14% 64%; /* Gray-400 */
+        --foreground-disabled: 220 14% 45%; /* Gray-500 */
+        
+        /* Border Colors - Keep Original Dark */
+        --border: 220 14% 19%; /* Gray-700 */
+        --border-secondary: 220 14% 24%; /* Gray-600 */
+        --border-muted: 220 14% 14%; /* Gray-800 */
+        
+        /* Card Colors - Keep Original Dark */
+        --card: 220 14% 14%; /* Gray-800 */
+        --card-foreground: 220 14% 98%; /* Gray-50 */
+        
+        /* Input Colors - Keep Original Dark */
+        --input: 220 14% 19%; /* Gray-700 */
+        --input-border: 220 14% 24%; /* Gray-600 */
+        --input-focus: 262 83% 58%; /* Purple-500 */
+        
+        /* Ring Colors */
+        --ring: 262 83% 58%; /* Purple-500 */
     }
 
     html {
@@ -69,54 +140,52 @@
     }
 
     ::-webkit-scrollbar-thumb {
-        background: rgba(156, 163, 175, 0.3);
+        background: hsl(var(--foreground-muted) / 0.3);
         border-radius: 3px;
         border: none;
         transition: background 0.2s ease;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: rgba(156, 163, 175, 0.6);
+        background: hsl(var(--foreground-muted) / 0.6);
     }
 
     ::-webkit-scrollbar-thumb:active {
-        background: rgba(156, 163, 175, 0.8);
+        background: hsl(var(--foreground-muted) / 0.8);
     }
 
     ::-webkit-scrollbar-corner {
         background: transparent;
     }
 
-    .dark ::-webkit-scrollbar-thumb {
-        background: rgba(148, 163, 184, 0.3);
-    }
-
-    .dark ::-webkit-scrollbar-thumb:hover {
-        background: rgba(148, 163, 184, 0.6);
-    }
-
-    .dark ::-webkit-scrollbar-thumb:active {
-        background: rgba(148, 163, 184, 0.8);
-    }
-
     /* Firefox scrollbar */
     * {
         scrollbar-width: thin;
-        scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+        scrollbar-color: hsl(var(--foreground-muted) / 0.3) transparent;
     }
 }
 
 @layer components {
+    /* Glass Effect - Keep Original */
     .glass-effect {
         background-color: rgb(255 255 255 / 0.1);
         backdrop-filter: blur(12px);
         border: 1px solid rgb(255 255 255 / 0.2);
     }
 
+    /* Gradient Backgrounds - Keep Original */
     .gradient-bg {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
 
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Card Hover Effects - Keep Original */
     .song-card-hover {
         transform: scale(1);
         transition: all 0.3s ease;
