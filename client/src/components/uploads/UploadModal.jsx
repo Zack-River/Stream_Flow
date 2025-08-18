@@ -30,6 +30,9 @@ export default function UploadModal({ onClose, editSong = null }) {
   useEffect(() => {
     setIsVisible(true)
     
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden'
+    
     // If editing, populate the form with existing data
     if (isEditMode && editSong) {
       setFormData({
@@ -38,6 +41,11 @@ export default function UploadModal({ onClose, editSong = null }) {
         album: editSong.album || "",
       })
       setCoverPreview(editSong.cover || null)
+    }
+
+    // Cleanup function to restore scroll when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset'
     }
   }, [isEditMode, editSong])
 
@@ -53,6 +61,8 @@ export default function UploadModal({ onClose, editSong = null }) {
 
   const handleClose = () => {
     setIsVisible(false)
+    // Restore body scroll before closing
+    document.body.style.overflow = 'unset'
     setTimeout(onClose, 300)
   }
 
