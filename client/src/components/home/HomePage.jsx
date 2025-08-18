@@ -39,7 +39,7 @@ const featuredSongs = [
     url: "https://placehold.co/200x200/EFEFEF/AAAAAA?text=Song+Cover",
   },
 ]
-
+//#9333ea, #6b21a8 ,#2563eb
 export default function HomePage() {
   return (
     <main className="space-y-8" role="main" aria-labelledby="home-page-title">
