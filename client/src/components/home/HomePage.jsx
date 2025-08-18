@@ -42,75 +42,42 @@ const featuredSongs = [
 //#9333ea, #6b21a8 ,#2563eb
 export default function HomePage() {
   return (
-    <main className="space-y-8" role="main" aria-labelledby="home-page-title">
+    <div className="space-y-8">
       {/* Hero Section */}
-      <section 
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-tr from-blue-600 via-purple-800 to-purple-600 p-8 text-white"
-        aria-labelledby="hero-title"
-      >
+      <div className="relative overflow-hidden rounded-2xl p-8 text-white mb-8">
+        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600 via-purple-800 to-purple-600"></div>
+        <div className="absolute inset-0 bg-black opacity-20"></div>
+
         <div className="relative z-10">
-          <h1 id="hero-title" className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4">
-            Welcome to StreamFlow
-          </h1>
-          <p className="text-lg sm:text-xl mb-6 max-w-2xl opacity-90">
-            Discover, upload, and stream your favorite music. Create playlists, manage your library, and enjoy a seamless music experience.
+          <h1 className="text-4xl font-bold mb-4">Welcome to StreamFlow</h1>
+          <p className="text-lg opacity-90 mb-6 max-w-md">
+            Discover, upload, and stream your favorite music with our modern platform
           </p>
-          <div className="flex flex-wrap gap-4">
-            <button 
-              className="bg-white text-purple-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
-              aria-label="Start uploading music"
-            >
-              Start Uploading
-            </button>
-            <button 
-              className="border-2 border-white text-white px-6 py-3 rounded-xl font-semibold hover:bg-white hover:text-purple-600 transition-colors"
-              aria-label="Explore music library"
-            >
-              Explore Library
-            </button>
-          </div>
+          <button className="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            Start Listening
+          </button>
         </div>
-        
-        {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-32 translate-x-32" aria-hidden="true"></div>
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white opacity-10 rounded-full translate-y-24 -translate-x-24" aria-hidden="true"></div>
-      </section>
+      </div>
 
       {/* Featured Songs */}
-      <section aria-labelledby="featured-songs-title">
-        <h2 id="featured-songs-title" className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-          Featured Songs
-        </h2>
-        <div 
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4"
-          role="list"
-          aria-label="Featured songs"
-        >
+      <div>
+        <h2 className="text-2xl font-bold mb-6">Featured Songs</h2>
+        <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4">
           {featuredSongs.map((song) => (
-            <div key={song.id} role="listitem">
-              <SongCard song={song} />
-            </div>
+            <SongCard key={song.id} song={song} />
           ))}
         </div>
-      </section>
+      </div>
 
       {/* Trending Now */}
-      <section aria-labelledby="trending-songs-title">
-        <h2 id="trending-songs-title" className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-          Trending Now
-        </h2>
-        <div 
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4"
-          role="list"
-          aria-label="Trending songs"
-        >
+      <div>
+        <h2 className="text-2xl font-bold mb-6">Trending Now</h2>
+        <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4">
           {featuredSongs.slice(1, 4).map((song) => (
-            <div key={`trending-${song.id}`} role="listitem">
-              <SongCard song={song} />
-            </div>
+            <SongCard key={`trending-${song.id}`} song={song} />
           ))}
         </div>
-      </section>
-    </main>
+      </div>
+    </div>
   )
 }
