@@ -41,7 +41,7 @@ export default function Navbar({ onMenuClick }) {
 
   return (
     <nav className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-700/50 shadow-md px-6 py-4 sticky top-0 z-30">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between space-x-5">
         {/* Left side */}
         <div className="flex items-center space-x-4">
           <button
@@ -60,20 +60,19 @@ export default function Navbar({ onMenuClick }) {
             </span>
           </Link>
         </div>
-        
+
         {/* Center - Home Icon and Search Bar */}
         <div className="flex items-center space-x-2 sm:space-x-4 flex-1 justify-center max-w-2xl">
           <Link
             to="/"
-            className={`hidden lg:block p-3 rounded-xl transition-all duration-300 transform hover:scale-110 ${
-              isHome 
-                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400" 
-                : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
-            }`}
+            className={`hidden lg:block p-3 rounded-xl transition-all duration-300 transform hover:scale-110 ${isHome
+              ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+              : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+              }`}
           >
             <Home className="w-5 h-5" />
           </Link>
-          
+
           <div className="relative flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-black dark:text-gray-400 w-5 h-5" />
             <input
