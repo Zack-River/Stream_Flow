@@ -63,9 +63,9 @@ const CreatePlaylistModal = ({ isOpen, onClose, onCreatePlaylist }) => {
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">Create Playlist</h2>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -159,7 +159,7 @@ export default function Sidebar({ isOpen, onClose }) {
               {/* Close button for mobile - only visible on mobile */}
               <button
                 onClick={onClose}
-                className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-xl transition-colors"
+                className="lg:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
