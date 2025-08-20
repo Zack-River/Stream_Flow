@@ -6,6 +6,17 @@ const audioSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  category: {
+    type: String,
+    required: true,
+    trim: true,
+    enum: ['song', 'podcast', 'audiobook'],
+    default: 'song'
+  },
+  duration: {
+    type: Number,
+    required: true
+  },
   genre: {
     type: String,
     required: true,

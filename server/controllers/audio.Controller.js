@@ -71,6 +71,16 @@
     }
   };
 
+  exports.GetAllAudios = async (req,res, next) => {
+    try {
+      // get all audios
+      const audios = await Audio.find();
+      res.json({ count: audios.length, audios });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // === Get My Audios ===
   exports.getMyAudios = async (req, res, next) => {
     try {
@@ -188,7 +198,7 @@
   };
 
   // === Admin Get All Audios ===
-  exports.adminGetAllAudios = async (req, res, next) => {
+  exports.GetAllAudios = async (req, res, next) => {
     try {
       const audios = await Audio.find().populate('uploadedBy', 'name email');
       res.json({ count: audios.length, audios });
