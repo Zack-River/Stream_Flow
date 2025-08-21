@@ -5,10 +5,10 @@ import logoImage from "../../assets/logo.png"
 import { Search, Home, Menu, Sun, Moon, User, Settings, LogOut } from "lucide-react"
 import AuthenticationModals from "../authentication/AuthenticationModals"
 
-export default function Navbar({ onMenuClick }) {
+export default function Navbar({ onMenuClick, onSearch, searchQuery }) {
   const { isDark, toggleTheme } = useTheme()
   const [showUserMenu, setShowUserMenu] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || "")
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState("signin")
   const location = useLocation()
@@ -20,6 +20,11 @@ export default function Navbar({ onMenuClick }) {
 
   // Simulate authentication state (replace with your actual auth state)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  // Update local search query when prop changes
+  useEffect(() => {
+    setLocalSearchQuery(searchQuery || "")
+  }, [searchQuery])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -53,6 +58,21 @@ export default function Navbar({ onMenuClick }) {
   const handleSignUpClick = () => {
     setAuthMode("signup")
     setShowAuthModal(true)
+  }
+
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value
+    setLocalSearchQuery(value)
+    if (onSearch) {
+      onSearch(value)
+    }
+  }
+
+  const clearSearch = () => {
+    setLocalSearchQuery("")
+    if (onSearch) {
+      onSearch("")
+    }
   }
 
   return (
@@ -95,10 +115,20 @@ export default function Navbar({ onMenuClick }) {
               <input
                 type="text"
                 placeholder="Search songs, artists ..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-4 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300"
+                value={localSearchQuery}
+                onChange={handleSearchInputChange}
+                className="w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300"
               />
+              {localSearchQuery && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
           </div>
 

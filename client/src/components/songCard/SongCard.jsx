@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react"
-import { Play, Pause, Heart, MoreHorizontal, Trash2, Music, Edit2} from "lucide-react"
+import { Play, Pause, Heart, MoreHorizontal, Trash2, Music, Edit2 } from "lucide-react"
 import { useMusic } from "../../context/MusicContext"
 
 export default function SongCard({ song, isEditMode = false, onEditClick = null }) {
@@ -8,11 +8,14 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const menuRef = useRef(null)
-
-  const isCurrentSong = state.currentSong?.id === song.id
+  
+  // Handle both API songs (id) and user uploads (id or _id)
+  const songId = song.id || song._id
+  
+  const isCurrentSong = state.currentSong?.id === songId
   const isPlaying = isCurrentSong && state.isPlaying
-  const isFavorite = state.favorites.some((fav) => fav.id === song.id)
-  const isUploaded = song.isUploaded
+  const isFavorite = state.favorites.some((fav) => (fav.id || fav._id) === songId)
+  const isUploaded = song.isUploaded || false // API songs have isUploaded: false
 
   // Handle outside click and escape key for menu
   useEffect(() => {
@@ -41,20 +44,50 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
 
   const handlePlayPause = (e) => {
     e.stopPropagation()
+    
+    // Normalize song data for the player
+    const normalizedSong = {
+      id: songId,
+      title: song.title,
+      artist: song.artist || song.singer, // Handle both formats
+      album: song.album,
+      duration: song.duration,
+      cover: song.cover || song.coverImageUrl,
+      url: song.url || song.audioUrl, // Handle both formats
+      isUploaded: isUploaded,
+      genre: song.genre,
+      category: song.category
+    }
+    
     if (isCurrentSong) {
       dispatch({ type: "TOGGLE_PLAY" })
     } else {
-      dispatch({ type: "SET_CURRENT_SONG", payload: song })
+      dispatch({ type: "SET_CURRENT_SONG", payload: normalizedSong })
       dispatch({ type: "SET_PLAYING", payload: true })
     }
   }
 
   const handleFavorite = (e) => {
     e.stopPropagation()
+    
+    // Normalize song data for favorites
+    const normalizedSong = {
+      id: songId,
+      title: song.title,
+      artist: song.artist || song.singer,
+      album: song.album,
+      duration: song.duration,
+      cover: song.cover || song.coverImageUrl,
+      url: song.url || song.audioUrl,
+      isUploaded: isUploaded,
+      genre: song.genre,
+      category: song.category
+    }
+    
     if (isFavorite) {
-      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: song.id })
+      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: songId })
     } else {
-      dispatch({ type: "ADD_TO_FAVORITES", payload: song })
+      dispatch({ type: "ADD_TO_FAVORITES", payload: normalizedSong })
     }
   }
 
@@ -70,6 +103,7 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
     if (action === "delete") {
       setShowDeleteConfirm(true)
     }
+    // TODO: Implement other menu actions like "Add to Queue", "Add to Playlist"
   }
 
   const handleEditClick = (e) => {
@@ -85,23 +119,32 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
       dispatch({ type: "SET_PLAYING", payload: false })
     }
 
-    dispatch({ type: "REMOVE_UPLOAD", payload: song.id })
+    dispatch({ type: "REMOVE_UPLOAD", payload: songId })
 
     if (isFavorite) {
-      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: song.id })
+      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: songId })
     }
 
-    if (song.url && song.url.startsWith("blob:")) {
-      URL.revokeObjectURL(song.url)
+    // Clean up blob URLs if they exist
+    const audioUrl = song.url || song.audioUrl
+    if (audioUrl && audioUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(audioUrl)
     }
 
     setShowDeleteConfirm(false)
   }
 
+  // Get display values with fallbacks
+  const displayTitle = song.title || "Unknown Title"
+  const displayArtist = song.artist || song.singer || "Unknown Artist"
+  const displayCover = song.cover || song.coverImageUrl || "https://placehold.co/200x200/EFEFEF/AAAAAA?text=Song+Cover"
+  const displayDuration = song.duration || "0:00"
+  const displayGenre = song.genre
+
   return (
     <>
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 md:p-4 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-[1.02] border border-gray-100 dark:border-gray-700"
+        className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 md:p-4 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-[1.02] border border-gray-100 dark:border-gray-700 group"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -112,10 +155,20 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
             </div>
           )}
 
+          {/* Genre badge for API songs */}
+          {displayGenre && !isUploaded && (
+            <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-purple-500 text-white text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium z-10">
+              {displayGenre}
+            </div>
+          )}
+
           <img
-            src={song.cover || "https://placehold.co/200x200/EFEFEF/AAAAAA?text=Song+Cover"}
-            alt={`${song.title} cover`}
+            src={displayCover}
+            alt={`${displayTitle} cover`}
             className="w-full aspect-square object-cover rounded-md sm:rounded-lg"
+            onError={(e) => {
+              e.target.src = "https://placehold.co/200x200/EFEFEF/AAAAAA?text=Song+Cover"
+            }}
           />
 
           {/* Edit Mode Overlay */}
@@ -165,11 +218,15 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
         </div>
 
         <div className="space-y-0.5 sm:space-y-1">
-          <h3 className="font-semibold text-xs sm:text-sm truncate">{song.title}</h3>
-          <p className="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs truncate">{song.artist}</p>
+          <h3 className="font-semibold text-xs sm:text-sm truncate" title={displayTitle}>
+            {displayTitle}
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs truncate" title={displayArtist}>
+            {displayArtist}
+          </p>
           <div className="flex items-center justify-between">
             <span className="text-gray-500 dark:text-gray-500 text-[9px] sm:text-xs font-medium bg-gray-100 dark:bg-gray-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
-              {song.duration}
+              {displayDuration}
             </span>
             
             {/* Menu button - Hide in edit mode */}
@@ -221,7 +278,7 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
           <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 max-w-xs sm:max-w-sm w-full shadow-2xl">
             <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4">Delete Song</h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 text-xs sm:text-sm">
-              Are you sure you want to delete "{song.title}"? This action cannot be undone.
+              Are you sure you want to delete "{displayTitle}"? This action cannot be undone.
             </p>
             <div className="flex space-x-2 sm:space-x-3">
               <button

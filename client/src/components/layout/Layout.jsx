@@ -8,19 +8,32 @@ import AudioPlayer from '../audioPlayer/AudioPlayer';
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true)
+  const [searchQuery, setSearchQuery] = useState("")
 
   const toggleRightSidebar = () => {
     setIsRightSidebarOpen(!isRightSidebarOpen)
   }
 
+  const handleSearch = (query) => {
+    setSearchQuery(query)
+  }
+
+  const clearSearch = () => {
+    setSearchQuery("")
+  }
+
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      <Navbar onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <Navbar 
+        onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
+        onSearch={handleSearch}
+        searchQuery={searchQuery}
+      />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
           <div className="p-6">
-            <Outlet />
+            <Outlet context={{ searchQuery, clearSearch }} />
           </div>
         </main>
         <RightSidebar isOpen={isRightSidebarOpen} onClose={() => setIsRightSidebarOpen(false)} />
