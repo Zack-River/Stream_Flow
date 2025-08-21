@@ -20,6 +20,7 @@ const {
 // });
 
 // ✅ Final upload route — matches your fetch
+router.get("/", getPublicAudios);
 router.post(
   "/upload", // <-- correct path!
   checkAuthenticated,

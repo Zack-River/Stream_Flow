@@ -6,7 +6,7 @@
   // === Upload Audio ===
   exports.uploadAudio = async (req, res, next) => {
     try {
-      const { title, genre, isPrivate, singer } = req.body;
+      const { title, genre, isPrivate, singer, duration } = req.body;
 
       // Validate files exist
       if (!req.files?.audio?.length || !req.files?.cover?.length) {
@@ -18,27 +18,20 @@
       }
 
       // ✅ Correct singer parsing
-      let singerArray = [];
-
+      //rewrite it to turn the array into string has names and splitted by ','
+      let singers = '';
       if (Array.isArray(singer)) {
-        singerArray = singer;
+        singers = singer.join(',');
       } else if (typeof singer === 'string') {
-        try {
-          // Try JSON.parse first (handles '["A","B"]')
-          const parsed = JSON.parse(singer);
-          if (Array.isArray(parsed)) {
-            singerArray = parsed;
-          } else {
-            singerArray = singer.split(',').map(s => s.trim()).filter(Boolean);
-          }
-        } catch {
-          // If not JSON, fallback to comma-split
-          singerArray = singer.split(',').map(s => s.trim()).filter(Boolean);
-        }
+        singers = singer;
       }
 
-      if (!Array.isArray(singerArray) || singerArray.length === 0) {
+      if (!Array.isArray(singer) || singers.length === 0) {
         return res.status(400).json({ message: 'At least one singer is required.' });
+      }
+
+      if (!duration || isNaN(duration) || duration <= 0) {
+        return res.status(400).json({ message: 'Valid duration is required.' });
       }
 
       const audioFile = req.files.audio[0];
@@ -48,10 +41,12 @@
         title: title.trim(),
         genre: genre.trim(),
         isPrivate: isPrivate === 'true',
-        singer: singerArray,
-        audioUrl: `/uploads/audio/${audioFile.filename}`,
-        coverImageUrl: `/uploads/audio/${coverFile.filename}`,
+        singer: singers,
+        audioUrl: `${__dirname}/../uploads/audio/${audioFile.filename}`, // example resonse on render: http://localhost:3000/uploads/audio/1693523200000-audio.mp3
+
+        coverImageUrl: `${__dirname}/../uploads/audio/${coverFile.filename}`,
         uploadedBy: req.user._id,
+        duration: duration
       });
 
       await audio.save();
@@ -70,6 +65,16 @@
       next(err);
     }
   };
+
+  exports.GetAllAudios = async (req,res, next) => {
+    try {
+      // get all audios
+      const audios = await Audio.find();
+      res.json({ count: audios.length, audios });
+    } catch (err) {
+      next(err);
+    }
+  }
 
   // === Get My Audios ===
   exports.getMyAudios = async (req, res, next) => {
@@ -188,7 +193,7 @@
   };
 
   // === Admin Get All Audios ===
-  exports.adminGetAllAudios = async (req, res, next) => {
+  exports.GetAllAudios = async (req, res, next) => {
     try {
       const audios = await Audio.find().populate('uploadedBy', 'name email');
       res.json({ count: audios.length, audios });
