@@ -10,6 +10,7 @@ const swaggerUi = require("swagger-ui-express");
 const YAML = require("yamljs");
 const { marked } = require("marked");
 const fs = require("fs");
+const cors = require("cors");
 
 // Routes
 const adminRoutes = require("./routes/admin.Routes.js");
@@ -24,6 +25,7 @@ const app = express();
 const swaggerDocument = YAML.load(path.join(__dirname, "swagger.yaml"));
 
 // Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
