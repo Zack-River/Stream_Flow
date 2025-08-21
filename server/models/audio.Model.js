@@ -35,14 +35,18 @@ const audioSchema = new mongoose.Schema({
     default: false
   },
   singer: {
-    type: [String],
+    type: String,
     required: true,
     validate: {
-      validator: function(arr) {
-        return arr.length > 0;
+      validator: function(string) {
+        return string.length > 0;
       },
       message: 'At least one singer is required.'
     }
+  },
+  duration: {
+    type: Number,
+    required: true
   },
   uploadedBy: {
     type: mongoose.Schema.Types.ObjectId,
