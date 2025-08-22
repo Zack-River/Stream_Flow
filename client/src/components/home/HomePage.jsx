@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { useOutletContext } from "react-router-dom"
+import { PuffLoader } from 'react-spinners'
 import SongCard from "../songCard/SongCard.jsx"
 import {
   fetchSongsWithRetry,
@@ -144,10 +145,13 @@ export default function HomePage() {
       <div className="space-y-8">
         <HeroSection />
 
-
-        {/* Loading State */}
+        {/* Loading State with PuffLoader */}
         <div className="flex flex-col items-center justify-center py-16 space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+          <PuffLoader
+            color="#7C3AED"
+            size={80}
+            loading={true}
+          />
           <div className="text-center">
             <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
               Loading your music...
@@ -171,7 +175,6 @@ export default function HomePage() {
     return (
       <div className="space-y-8">
         <HeroSection />
-
 
         {/* Error State */}
         <div className="flex flex-col items-center justify-center py-16">
@@ -395,7 +398,11 @@ export default function HomePage() {
       {loading && songs.length > 0 && (
         <div className="fixed top-14 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50 border border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+            <PuffLoader
+              color="#7C3AED"
+              size={20}
+              loading={true}
+            />
             <span className="text-sm text-gray-600 dark:text-gray-400">
               {searchQuery ? 'Searching...' : 'Refreshing...'}
             </span>
