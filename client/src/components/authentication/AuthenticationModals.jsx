@@ -140,8 +140,6 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
     setTimeout(() => {
       // Reset everything when modal closes
       setMode("signin")
-      setSignInForm({ email: "", password: "" })
-      setSignUpForm({ username: "", email: "", password: "", confirmPassword: "" })
       setSignInErrors({})
       setSignUpErrors({})
       setShowPassword(false)

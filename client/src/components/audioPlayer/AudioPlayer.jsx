@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react"
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Shuffle, Repeat, Repeat1, Heart, PanelRightOpen, Import } from "lucide-react"
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Shuffle, Repeat, Repeat1, Heart, PanelRightOpen } from "lucide-react"
 import { useMusic } from "../../context/MusicContext"
-import { formatTime } from "../../utils/audioUtils" 
+import { formatTime, parseTime } from "../../utils/audioUtils"
 
 export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }) {
   const { state, dispatch } = useMusic()
@@ -18,7 +18,10 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
   const isSeekingRef = useRef(false) // Track seeking state
 
   const { currentSong, isPlaying, volume, currentTime, duration } = state
-  const isFavorite = currentSong && state.favorites.some((fav) => fav.id === currentSong.id)
+  
+  // Handle both song ID formats
+  const currentSongId = currentSong?.id || currentSong?._id
+  const isFavorite = currentSong && state.favorites.some((fav) => (fav.id || fav._id) === currentSongId)
 
   // Detect mobile screen size and dark mode
   useEffect(() => {
@@ -79,9 +82,11 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     setIsDragging(false) // Reset dragging state
     isSeekingRef.current = false // Reset seeking state
 
-    if (audioRef.current) {
+    if (audioRef.current && currentSong) {
       audioRef.current.pause()
-      audioRef.current.src = currentSong.url
+      // Handle both URL formats
+      const audioUrl = currentSong.url || currentSong.audioUrl
+      audioRef.current.src = audioUrl
       audioRef.current.load()
       audioRef.current.currentTime = 0 // Ensure reset
     }
@@ -96,7 +101,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [currentSong?.id, dispatch])
+  }, [currentSongId, dispatch])
 
   // Manual time updates for problematic audio sources
   const updateTimeManually = () => {
@@ -301,7 +306,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     if (!currentSong) return
 
     if (isFavorite) {
-      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: currentSong.id })
+      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: currentSongId })
     } else {
       dispatch({ type: "ADD_TO_FAVORITES", payload: currentSong })
     }
@@ -367,13 +372,18 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     return null
   }
 
+  // Get display values with proper fallbacks
+  const displayTitle = currentSong.title || "Unknown Title"
+  const displayArtist = currentSong.artist || currentSong.singer || "Unknown Artist"
+  const displayCover = currentSong.cover || currentSong.coverImageUrl || "https://placehold.co/48x48/EFEFEF/AAAAAA?text=Cover"
+
   return (
     <>
       <div className="bg-white/95 dark:bg-gray-800/95 border-t border-gray-200/50 dark:border-gray-700/50 px-6 py-2 backdrop-blur-lg shadow-2xl">
         <audio
-          key={currentSong.id}
+          key={currentSongId}
           ref={audioRef}
-          src={currentSong.url}
+          src={currentSong.url || currentSong.audioUrl}
           preload="auto"
         />
 
@@ -382,17 +392,20 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
           <div className="flex items-center space-x-3 w-50 min-w-0">
             <div className="relative flex-shrink-0">
               <img
-                src={currentSong.cover || "https://via.placeholder.com/48x48?text=Cover"}
-                alt={currentSong.title}
+                src={displayCover}
+                alt={displayTitle}
                 className="w-12 h-12 rounded-lg object-cover shadow-md"
+                onError={(e) => {
+                  e.target.src = "https://placehold.co/48x48/EFEFEF/AAAAAA?text=Cover"
+                }}
               />
               {currentSong.isUploaded && (
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="font-semibold text-sm truncate">{currentSong.title}</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-xs truncate">{currentSong.artist}</p>
+              <h4 className="font-semibold text-sm truncate" title={displayTitle}>{displayTitle}</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-xs truncate" title={displayArtist}>{displayArtist}</p>
             </div>
             <button
               onClick={handleFavorite}

@@ -378,3 +378,40 @@ input[type="range"]:active::-webkit-slider-thumb {
     }
 
 }
+.delay-animation {
+    animation-delay: 2s;
+}
+
+.delay-animation-2 {
+    animation-delay: 4s;
+}
+
+.floating {
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { 
+        transform: translateY(0px) rotate(0deg); 
+    }
+    50% { 
+        transform: translateY(-20px) rotate(5deg); 
+    }
+}
+
+.hero-card {
+    transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.hero-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.listen-btn:hover {
+    box-shadow: 0 20px 40px -8px rgba(99, 102, 241, 0.6);
+}
+
+.explore-btn:hover {
+    box-shadow: 0 10px 25px -5px rgba(255, 255, 255, 0.2);
+}
