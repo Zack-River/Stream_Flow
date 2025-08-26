@@ -1,10 +1,6 @@
 const { body } = require('express-validator');
 
 exports.registerValidator = [
-  body('name')
-    .notEmpty().withMessage('Name is required')
-    .isString().withMessage('Name must be a string'),
-
   body('username')
     .notEmpty().withMessage('Username is required')
     .isString().withMessage('Username must be a string')

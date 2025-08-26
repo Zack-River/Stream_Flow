@@ -1,5 +1,5 @@
 // ============================
-// server/index.js (or server/app.js)
+// server/index.js (or server/app.js) - UPDATED
 // ============================
 
 const express = require("express");
@@ -24,8 +24,37 @@ connectDB();
 const app = express();
 const swaggerDocument = YAML.load(path.join(__dirname, "swagger.yaml"));
 
+// CORS Configuration - FIXED
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Define allowed origins
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:5172',
+      'http://localhost:3000',
+      'http://localhost:5000',
+      // Add your production domain here when deploying
+      // 'https://yourproductiondomain.com'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Allow credentials (cookies, authorization headers)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
+// Apply CORS middleware with options
+app.use(cors(corsOptions));
+
 // Middleware
-app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -65,7 +94,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
 // Routes
 app.use(adminRoutes);
 app.use(adminAudioRoutes);
-app.use(userRoutes);
+app.use("/api/users", userRoutes);
 app.use("/audios", audioRoutes);
 
 // Error handler
