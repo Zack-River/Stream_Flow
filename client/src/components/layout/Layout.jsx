@@ -9,6 +9,7 @@ export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   const toggleRightSidebar = () => {
     setIsRightSidebarOpen(!isRightSidebarOpen)
@@ -28,12 +29,14 @@ export default function Layout() {
         onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
         onSearch={handleSearch}
         searchQuery={searchQuery}
+        isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
           <div className="p-6">
-            <Outlet context={{ searchQuery, clearSearch }} />
+            <Outlet context={{ searchQuery, clearSearch, isAuthenticated, setIsAuthenticated }} />
           </div>
         </main>
         <RightSidebar isOpen={isRightSidebarOpen} onClose={() => setIsRightSidebarOpen(false)} />

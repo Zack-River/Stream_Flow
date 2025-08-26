@@ -5,7 +5,7 @@ import logoImage from "../../assets/logo.png"
 import { Search, Home, Menu, Sun, Moon, User, Settings, LogOut } from "lucide-react"
 import AuthenticationModals from "../authentication/AuthenticationModals"
 
-export default function Navbar({ onMenuClick, onSearch, searchQuery }) {
+export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthenticated, setIsAuthenticated }) {
   const { isDark, toggleTheme } = useTheme()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || "")
@@ -17,9 +17,6 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery }) {
 
   // Check if current page is home
   const isHome = location.pathname === '/'
-
-  // Simulate authentication state (replace with your actual auth state)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   // Update local search query when prop changes
   useEffect(() => {
@@ -209,6 +206,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery }) {
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         initialMode={authMode}
+        onAuthSuccess={() => setIsAuthenticated(true)}
       />
     </>
   )
