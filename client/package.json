@@ -11,11 +11,13 @@
   },
   "dependencies": {
     "axios": "^1.11.0",
+    "formik": "^2.4.6",
     "lucide-react": "^0.526.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.1",
-    "react-spinners": "^0.17.0"
+    "react-spinners": "^0.17.0",
+    "yup": "^1.7.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",
