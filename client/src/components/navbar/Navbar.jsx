@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTheme } from "../../context/ThemeContext"
+import { useAuth } from "../../context/AuthContext"
 import logoImage from "../../assets/logo.png"
 import { Search, Home, Menu, Sun, Moon, User, Settings, LogOut } from "lucide-react"
 import AuthenticationModals from "../authentication/AuthenticationModals"
-import { logoutUser } from "../../utils/authUtils"
 
-export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthenticated, setIsAuthenticated }) {
+export default function Navbar({ onMenuClick, onSearch, searchQuery }) {
   const { isDark, toggleTheme } = useTheme()
+  const { isAuthenticated, user, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || "")
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -60,14 +61,8 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
 
   const handleLogout = async () => {
     try {
-      const result = await logoutUser()
-      if (result.success) {
-        setIsAuthenticated(false)
-        // Optional: Show success toast
-        console.log(result.message)
-      } else {
-        console.error('Logout failed:', result.message)
-      }
+      await logout()
+      setShowUserMenu(false)
     } catch (error) {
       console.error('Logout error:', error)
     }
@@ -175,12 +170,32 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="w-10 h-10 bg-purple-600 hover:bg-purple-700 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg"
+                  title={user?.username || user?.name || 'User'}
                 >
-                  <User className="w-5 h-5 text-white" />
+                  {user?.profileImg ? (
+                    <img 
+                      src={user.profileImg} 
+                      alt="Profile" 
+                      className="w-8 h-8 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <User className="w-5 h-5 text-white" />
+                  )}
                 </button>
 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-3 z-50">
+                    {user && (
+                      <div className="px-4 py-3 border-b border-gray-200/50 dark:border-gray-700/50 mb-2">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {user.name || user.username}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {user.email}
+                        </p>
+                      </div>
+                    )}
+                    
                     <button
                       onClick={() => setShowUserMenu(false)}
                       className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
@@ -200,10 +215,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
                     <hr className="my-2 border-gray-200/50 dark:border-gray-700/50 mx-4" />
 
                     <button
-                      onClick={() => {
-                        handleLogout()
-                        setShowUserMenu(false)
-                      }}
+                      onClick={handleLogout}
                       className="flex items-center px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors rounded-xl mx-2 w-11/12 text-left"
                     >
                       <LogOut className="w-4 h-4 mr-3" />
@@ -222,8 +234,6 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         initialMode={authMode}
-        onAuthSuccess={() => setIsAuthenticated(true)}
-        setIsAuthenticated={setIsAuthenticated}
       />
     </>
   )

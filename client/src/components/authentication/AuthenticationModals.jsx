@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Formik, Field } from "formik"
+import { useAuth } from "../../context/AuthContext"
 import FormInput from "../FormInput/FormInput"
 import * as Yup from "yup"
 import { X, Mail, Lock, User } from "lucide-react"
@@ -40,9 +41,9 @@ const signUpSchema = Yup.object({
 export default function AuthenticationModals({ 
   isOpen, 
   onClose, 
-  initialMode = "signin",
-  setIsAuthenticated 
+  initialMode = "signin"
 }) {
+  const { login } = useAuth()
   const [mode, setMode] = useState(initialMode)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -102,7 +103,10 @@ export default function AuthenticationModals({
 
       if (result.success) {
         showToast(result.message || 'Successfully signed in!', 'success')
-        setIsAuthenticated(true)
+        
+        // Update auth context with user and token
+        login(result.user, result.accessToken)
+        
         clearAllForms()
         
         // Close modal after short delay
@@ -140,7 +144,10 @@ export default function AuthenticationModals({
 
       if (result.success) {
         showToast(result.message || 'Account created successfully!', 'success')
-        setIsAuthenticated(true)
+        
+        // Update auth context with user and token
+        login(result.user, result.accessToken)
+        
         clearAllForms()
         
         // Close modal after short delay
