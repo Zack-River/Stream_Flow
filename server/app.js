@@ -32,12 +32,7 @@ const corsOptions = {
     
     // Define allowed origins
     const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:5172',
-      'http://localhost:3000',
-      'http://localhost:5000',
-      // Add your production domain here when deploying
-      // 'https://yourproductiondomain.com'
+      process.env.UI,
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
