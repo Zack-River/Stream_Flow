@@ -39,10 +39,16 @@ const userShcema = new mongoose.Schema({
         enum: ["user","admin"],
         default: "user"
     },
-    refreshToken: {
-        type: String,
-        default: "",
-    },
+    sessions: [
+        {
+            token: String,
+            expires: Date,
+            device: String,
+            os: String,
+            browser: String,
+            ip: String,
+        }
+    ],
     isActive: {
         type: Boolean,
         default: true
