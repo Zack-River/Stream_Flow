@@ -32,7 +32,14 @@ const corsOptions = {
     
     // Define allowed origins
     const allowedOrigins = [
-      process.env.UI,
+      'http://localhost:5173',
+      'http://localhost:5172',
+      'http://localhost:3000',
+      'http://localhost:5000',
+      'https://stream-flow-ui.vercel.app/',
+      'https://stream-flow-sand.vercel.app/',
+      // Add your production domain here when deploying
+      // 'https://yourproductiondomain.com'
     ];
     
     if (allowedOrigins.indexOf(origin) !== -1) {
