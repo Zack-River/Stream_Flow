@@ -25,22 +25,20 @@ exports.clearAuthCookies = function (res) {
 };
 
 function createCookie(res, name, token, maxAge) {
-  const isProduction = process.env.NODE_ENV === 'production'
   res.cookie(name, token, {
     httpOnly: true,
-    secure: isProduction, // Only HTTPS in prod
-    sameSite: isProduction ? 'Strict' : 'Lax',          // Prevent CSRF
+    secure: false, // Only HTTPS in prod
+    sameSite: 'none',          // Prevent CSRF
     maxAge: maxAge,
     path: '/',                   // Available to entire app
   });
 }
 
 function removeCookie(res, name) {
-  const isProduction = process.env.NODE_ENV === 'production'
   res.clearCookie(name, {
     httpOnly: true,
-    secure: isProduction,
-    sameSite: 'strict',
+    secure: false,
+    sameSite: 'none',
     path: '/',
   });
 }
