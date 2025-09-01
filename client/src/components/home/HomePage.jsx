@@ -412,7 +412,7 @@ export default function HomePage() {
 
       {/* Error Toast for Background Operations */}
       {error && songs.length > 0 && (
-        <div className="fixed top-4 right-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg shadow-lg p-4 z-50 max-w-sm">
+        <div className="fixed top-14 right-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg shadow-lg p-4 z-50 max-w-sm">
           <div className="flex items-start space-x-3">
             <div className="text-red-500 text-lg">⚠️</div>
             <div className="flex-1">
