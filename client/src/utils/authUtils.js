@@ -3,58 +3,82 @@ import axios from 'axios'
 
 const BASE_URL = 'https://stream-flow-api.onrender.com'
 
-// Global access token storage (in-memory only)
-let currentAccessToken = null
-
-// Callback for when access token is updated
-let onTokenUpdate = null
+// Auth context reference for triggering logout
+let authContextRef = null
 
 // Create axios instance with default config
 const authAPI = axios.create({
   baseURL: BASE_URL,
-  withCredentials: true, // Important: includes cookies for refresh token
+  withCredentials: true, // Critical: includes HTTP-only cookies
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000,
 })
 
-// Request interceptor to add access token to headers
+// Create a separate instance for refresh to avoid interceptor loops
+const refreshAPI = axios.create({
+  baseURL: BASE_URL,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 15000,
+})
+
+// Request interceptor for logging
 authAPI.interceptors.request.use(
   (config) => {
-    if (currentAccessToken) {
-      config.headers.Authorization = `Bearer ${currentAccessToken}`
-    }
+    console.log(`🚀 Making request to: ${config.url}`)
     return config
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('❌ Request error:', error)
+    return Promise.reject(error)
+  }
 )
 
-// Response interceptor to handle token refresh automatically
+// Response interceptor for automatic token refresh
 authAPI.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`✅ Response from ${response.config.url}: ${response.status}`)
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
     
-    // If we get a 401 and haven't already tried to refresh, and it's not the refresh endpoint itself
-    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('refresh-token')) {
+    console.log(`❌ Response error from ${originalRequest?.url}: ${error.response?.status}`)
+    
+    // Handle 401 errors with automatic retry
+    if (
+      error.response?.status === 401 && 
+      !originalRequest._retry && 
+      !originalRequest.url?.includes('refresh-token') &&
+      !originalRequest.url?.includes('logout')
+    ) {
       originalRequest._retry = true
       
+      console.log('🔄 Access token expired, attempting silent refresh...')
+      
       try {
-        console.log('Access token expired, attempting refresh...')
         const refreshResult = await refreshAccessToken()
         
         if (refreshResult.success) {
-          // Update the global token
-          setAccessToken(refreshResult.data?.metadata?.accessToken)
-          
-          // Retry the original request with new token
-          originalRequest.headers.Authorization = `Bearer ${currentAccessToken}`
+          console.log('✅ Silent refresh successful, retrying original request')
+          // Retry the original request - tokens are now refreshed in cookies
           return authAPI(originalRequest)
+        } else {
+          console.log('❌ Silent refresh failed')
+          throw new Error('Refresh failed')
         }
       } catch (refreshError) {
-        console.error('Token refresh failed:', refreshError)
-        // Clear tokens and redirect to login
-        clearTokens()
+        console.error('❌ Silent refresh error:', refreshError)
+        
+        // Force logout through context if available
+        if (authContextRef?.silentRefresh) {
+          await authContextRef.silentRefresh()
+        }
+        
         return Promise.reject(refreshError)
       }
     }
@@ -63,56 +87,63 @@ authAPI.interceptors.response.use(
   }
 )
 
-// Set access token in memory
-export const setAccessToken = (token) => {
-  currentAccessToken = token
-  // Notify context about token update
-  if (onTokenUpdate) {
-    onTokenUpdate(token)
+// Set auth context reference for logout handling
+export const setAuthContext = (authContext) => {
+  authContextRef = authContext
+}
+
+// Check authentication status by trying to access a protected endpoint
+export const checkAuthSession = async () => {
+  try {
+    console.log('🔍 Checking authentication session...')
+    
+    // Try to access user profile or any protected endpoint
+    const response = await refreshAPI.get('/api/users/refresh-token')
+    
+    console.log('✅ Session check successful:', response.data)
+    
+    // Extract user data from response
+    const userData = response.data?.data || response.data?.user
+    
+    return {
+      success: true,
+      user: userData,
+      message: 'Session valid'
+    }
+  } catch (error) {
+    console.log('❌ Session check failed:', error.response?.status, error.message)
+    
+    return {
+      success: false,
+      message: 'No valid session',
+      error: error.response?.data || error.message
+    }
   }
-}
-
-// Get current access token
-export const getAccessToken = () => {
-  return currentAccessToken
-}
-
-// Clear tokens from memory
-export const clearTokens = () => {
-  currentAccessToken = null
-  if (onTokenUpdate) {
-    onTokenUpdate(null)
-  }
-}
-
-// Set token update callback
-export const setTokenUpdateCallback = (callback) => {
-  onTokenUpdate = callback
 }
 
 // Sign up user
 export const signUpUser = async (userData) => {
   try {
+    console.log('📝 Registering user:', userData.email)
+    
     const response = await authAPI.post('/api/users/register', {
       username: userData.username,
       email: userData.email,
       password: userData.password,
     })
     
-    // Extract access token from response and store it
-    const accessToken = response.data?.metadata?.accessToken
-    if (accessToken) {
-      setAccessToken(accessToken)
-    }
+    console.log('✅ Registration successful:', response.data)
+    console.log('🍪 Cookies after registration:', document.cookie)
     
     return {
       success: true,
       data: response.data,
       user: response.data.data,
-      accessToken: accessToken,
-      message: response.data.message
+      message: response.data.message || 'Registration successful!'
     }
   } catch (error) {
+    console.error('❌ Registration failed:', error)
+    
     return {
       success: false,
       message: error.response?.data?.message || 'Registration failed. Please try again.',
@@ -129,30 +160,21 @@ export const signInUser = async (userData) => {
     const response = await authAPI.post('/api/users/login', {
       email: userData.email,
       password: userData.password,
-      remember: "on" // Enable refresh token
+      remember: "on" // Enable persistent session
     })
     
     console.log('✅ Login successful:', response.data)
-    console.log('🍪 Checking cookies after login:', document.cookie)
-    
-    // Extract access token from response and store it
-    const accessToken = response.data?.metadata?.accessToken
-    if (accessToken) {
-      console.log('🔑 Access token received and stored')
-      setAccessToken(accessToken)
-    } else {
-      console.error('❌ No access token in login response')
-    }
+    console.log('🍪 Cookies after login:', document.cookie)
     
     return {
       success: true,
       data: response.data,
       user: response.data.data,
-      accessToken: accessToken,
-      message: response.data.message
+      message: response.data.message || 'Login successful!'
     }
   } catch (error) {
     console.error('❌ Login failed:', error)
+    
     return {
       success: false,
       message: error.response?.data?.message || 'Login failed. Please try again.',
@@ -161,53 +183,31 @@ export const signInUser = async (userData) => {
   }
 }
 
-// Refresh access token using httpOnly refresh token cookie
+// Refresh access token using HTTP-only refresh token cookie
 export const refreshAccessToken = async () => {
   try {
-    console.log('🔄 Attempting to refresh access token...')
+    console.log('🔄 Refreshing access token...')
     
-    // This endpoint uses the httpOnly refresh token cookie automatically
-    // Use a separate axios instance to avoid interceptor loops
-    const response = await axios.get(`${BASE_URL}/api/users/refresh-token`, {
-      withCredentials: true, // Include cookies
-      timeout: 10000, // 10 second timeout
-    })
+    const response = await refreshAPI.get('/api/users/refresh-token')
     
-    console.log('📡 Refresh token response status:', response.status)
-    console.log('📋 Refresh token response data:', response.data)
+    console.log('✅ Token refresh successful:', response.status)
+    console.log('🍪 Cookies after refresh:', document.cookie)
     
-    // Extract and store new access token
-    const accessToken = response.data?.metadata?.accessToken
-    if (accessToken) {
-      console.log('✅ New access token received')
-      setAccessToken(accessToken)
-    } else {
-      console.error('❌ No access token in refresh response')
-      throw new Error('No access token in response')
-    }
-    
-    // Try to get user data from different possible locations in the response
+    // Extract user data if available
     const userData = response.data?.data || response.data?.user
-    console.log('👤 User data from refresh:', userData)
     
     return {
       success: true,
       data: response.data,
-      accessToken: accessToken,
-      user: userData, // User data for context
+      user: userData,
       message: response.data?.message || 'Token refreshed successfully'
     }
   } catch (error) {
-    console.error('❌ Token refresh failed:', error)
-    console.error('❌ Response data:', error.response?.data)
-    console.error('❌ Status code:', error.response?.status)
-    
-    // Clear tokens on refresh failure
-    clearTokens()
+    console.error('❌ Token refresh failed:', error.response?.status, error.message)
     
     return {
       success: false,
-      message: error.response?.data?.message || error.message || 'Session expired. Please login again.',
+      message: error.response?.data?.message || 'Session expired. Please login again.',
       error: error.response?.data || error.message
     }
   }
@@ -216,31 +216,37 @@ export const refreshAccessToken = async () => {
 // Logout user
 export const logoutUser = async () => {
   try {
+    console.log('🚪 Logging out user...')
+    
     const response = await authAPI.get('/api/users/logout')
     
-    // Clear tokens from memory
-    clearTokens()
+    console.log('✅ Logout successful')
+    console.log('🍪 Cookies after logout:', document.cookie)
     
     return {
       success: true,
       data: response.data,
-      message: response.data.message
+      message: response.data?.message || 'Logged out successfully'
     }
   } catch (error) {
-    // Even if logout API fails, clear local tokens
-    clearTokens()
+    console.error('❌ Logout API failed:', error)
     
+    // Even if API fails, consider it successful since we want to clear session
     return {
-      success: false,
-      message: error.response?.data?.message || 'Logout failed. Please try again.',
-      error: error.response?.data || error.message
+      success: true, // Return success to clear local state
+      message: 'Logged out (API call failed but session cleared)'
     }
   }
 }
 
-// Check if user is authenticated
-export const checkAuthStatus = () => {
-  return !!currentAccessToken
+// Check if cookies exist (basic check)
+export const hasAuthCookies = () => {
+  const cookies = document.cookie
+  // Look for common auth cookie patterns
+  return cookies.includes('accessToken') || 
+         cookies.includes('refreshToken') || 
+         cookies.includes('token') ||
+         cookies.includes('session')
 }
 
 // Forgot password
@@ -290,44 +296,37 @@ export const resetPassword = async (password, resetToken) => {
 export const createAuthenticatedAPI = () => {
   const api = axios.create({
     baseURL: BASE_URL,
-    withCredentials: true,
+    withCredentials: true, // Include HTTP-only cookies
     headers: {
       'Content-Type': 'application/json',
-    }
+    },
+    timeout: 10000,
   })
   
-  // Add request interceptor to include access token
-  api.interceptors.request.use(
-    (config) => {
-      if (currentAccessToken) {
-        config.headers.Authorization = `Bearer ${currentAccessToken}`
-      }
-      return config
-    },
-    (error) => Promise.reject(error)
-  )
-  
-  // Add response interceptor for auto token refresh
+  // Add the same response interceptor for automatic refresh
   api.interceptors.response.use(
     (response) => response,
     async (error) => {
       const originalRequest = error.config
       
-      if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('refresh-token')) {
+      if (
+        error.response?.status === 401 && 
+        !originalRequest._retry && 
+        !originalRequest.url?.includes('refresh-token') &&
+        !originalRequest.url?.includes('logout')
+      ) {
         originalRequest._retry = true
         
         try {
           const refreshResult = await refreshAccessToken()
           
           if (refreshResult.success) {
-            originalRequest.headers.Authorization = `Bearer ${currentAccessToken}`
             return api(originalRequest)
           }
         } catch (refreshError) {
-          clearTokens()
-          // Optionally redirect to login
-          if (typeof window !== 'undefined') {
-            window.location.href = '/'
+          // Force logout through context if available
+          if (authContextRef?.logout) {
+            await authContextRef.logout()
           }
           return Promise.reject(refreshError)
         }
@@ -340,13 +339,17 @@ export const createAuthenticatedAPI = () => {
   return api
 }
 
-// Helper function to handle API calls with automatic retry
+// Helper function for making authenticated requests
 export const makeAuthenticatedRequest = async (requestFn) => {
   try {
-    return await requestFn()
+    return await requestFn(createAuthenticatedAPI())
   } catch (error) {
-    // If it's a 401, the interceptor will handle it
-    // If it's any other error, just throw it
+    // Error handling is done by the interceptor
     throw error
   }
+}
+
+// Utility to check if we're authenticated (client-side check)
+export const isAuthenticated = () => {
+  return hasAuthCookies()
 }

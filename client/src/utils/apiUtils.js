@@ -1,14 +1,15 @@
-
 // utils/apiUtils.js
 import axios from 'axios'
+import { refreshAccessToken } from './authUtils'
 
 // API Configuration
 const API_BASE_URL = 'https://stream-flow-api.onrender.com'
 
-// Create axios instance with default config
+// Create axios instance with default config for authenticated requests
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds timeout
+  withCredentials: true, // Include HTTP-only cookies
+  timeout: 10000,
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
@@ -18,23 +19,62 @@ const api = axios.create({
 // Add request interceptor for logging
 api.interceptors.request.use(
   (config) => {
-    console.log(`Making API request to: ${config.url}`)
+    console.log(`🚀 Making API request to: ${config.url}`)
     return config
   },
   (error) => {
-    console.error('Request error:', error)
+    console.error('❌ Request error:', error)
     return Promise.reject(error)
   }
 )
 
-// Add response interceptor for error handling
+// Add response interceptor for error handling and automatic token refresh
 api.interceptors.response.use(
   (response) => {
-    console.log(`API response from ${response.config.url}:`, response.status)
+    console.log(`✅ API response from ${response.config.url}: ${response.status}`)
     return response
   },
-  (error) => {
-    console.error('Response error:', error.response?.data || error.message)
+  async (error) => {
+    const originalRequest = error.config
+    
+    console.log(`❌ API error from ${originalRequest?.url}: ${error.response?.status}`)
+    
+    // Handle 401 errors with automatic retry
+    if (
+      error.response?.status === 401 && 
+      !originalRequest._retry && 
+      !originalRequest.url?.includes('refresh-token') &&
+      !originalRequest.url?.includes('logout') &&
+      !originalRequest.url?.includes('login') &&
+      !originalRequest.url?.includes('register')
+    ) {
+      originalRequest._retry = true
+      
+      console.log('🔄 Access token expired, attempting silent refresh...')
+      
+      try {
+        const refreshResult = await refreshAccessToken()
+        
+        if (refreshResult.success) {
+          console.log('✅ Silent refresh successful, retrying original request')
+          // The HTTP-only cookies are now refreshed, retry the request
+          return api(originalRequest)
+        } else {
+          console.log('❌ Silent refresh failed')
+          throw new Error('Token refresh failed')
+        }
+      } catch (refreshError) {
+        console.error('❌ Silent refresh error:', refreshError)
+        
+        // Force page reload to clear auth state and redirect to login
+        if (typeof window !== 'undefined') {
+          window.location.reload()
+        }
+        
+        return Promise.reject(refreshError)
+      }
+    }
+    
     return Promise.reject(error)
   }
 )
@@ -107,10 +147,11 @@ export const parseDurationToMs = (timeString) => {
 };
 
 /**
- * Fetch all songs from API
+ * Fetch all songs from API with authentication
  */
 export const fetchSongs = async () => {
   try {
+    console.log('🎵 Fetching songs...')
     const response = await api.get('/audios')
     
     // Handle different response structures
@@ -121,19 +162,22 @@ export const fetchSongs = async () => {
     }
     
     const transformedSongs = transformApiSongs(songsData)
-    console.log(`Successfully fetched ${transformedSongs.length} songs`)
+    console.log(`✅ Successfully fetched ${transformedSongs.length} songs`)
     
     return transformedSongs
   } catch (error) {
-    console.error('Error fetching songs:', error)
+    console.error('❌ Error fetching songs:', error)
     
     // Provide more specific error messages
     if (error.response) {
-      // Server responded with error status
       const status = error.response.status
       const message = error.response.data?.message || error.message
       
       switch (status) {
+        case 401:
+          throw new Error('Authentication required. Please log in.')
+        case 403:
+          throw new Error('Access denied. You may not have permission to view songs.')
         case 404:
           throw new Error('Songs not found. The API endpoint may have changed.')
         case 500:
@@ -144,10 +188,8 @@ export const fetchSongs = async () => {
           throw new Error(`API Error (${status}): ${message}`)
       }
     } else if (error.request) {
-      // Network error
       throw new Error('Network error. Please check your internet connection.')
     } else {
-      // Other error
       throw new Error(error.message || 'Unknown error occurred')
     }
   }
@@ -161,13 +203,13 @@ export const fetchSongsWithRetry = async (maxRetries = 3, delay = 1000) => {
     try {
       return await fetchSongs()
     } catch (error) {
-      console.log(`Fetch attempt ${attempt} failed:`, error.message)
+      console.log(`❌ Fetch attempt ${attempt} failed:`, error.message)
       
       if (attempt === maxRetries) {
         throw error
       }
       
-      // Wait before retrying
+      // Wait before retrying (exponential backoff)
       await new Promise(resolve => setTimeout(resolve, delay * attempt))
     }
   }
@@ -178,13 +220,82 @@ export const fetchSongsWithRetry = async (maxRetries = 3, delay = 1000) => {
  */
 export const fetchSongById = async (songId) => {
   try {
+    console.log(`🎵 Fetching song ID: ${songId}`)
     const response = await api.get(`/audios/${songId}`)
     const songData = response.data?.data || response.data
     
     return transformApiSong(songData)
   } catch (error) {
-    console.error(`Error fetching song ${songId}:`, error)
+    console.error(`❌ Error fetching song ${songId}:`, error)
     throw error
+  }
+}
+
+/**
+ * Upload a new song (authenticated)
+ */
+export const uploadSong = async (formData) => {
+  try {
+    console.log('📤 Uploading song...')
+    
+    // Create upload-specific API instance
+    const uploadAPI = axios.create({
+      baseURL: API_BASE_URL,
+      withCredentials: true,
+      timeout: 60000, // 60 seconds for uploads
+      headers: {
+        // Don't set Content-Type for FormData - let axios set it with boundary
+      }
+    })
+    
+    // Add the same response interceptor
+    uploadAPI.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config
+        
+        if (
+          error.response?.status === 401 && 
+          !originalRequest._retry && 
+          !originalRequest.url?.includes('refresh-token')
+        ) {
+          originalRequest._retry = true
+          
+          try {
+            const refreshResult = await refreshAccessToken()
+            
+            if (refreshResult.success) {
+              return uploadAPI(originalRequest)
+            }
+          } catch (refreshError) {
+            if (typeof window !== 'undefined') {
+              window.location.reload()
+            }
+            return Promise.reject(refreshError)
+          }
+        }
+        
+        return Promise.reject(error)
+      }
+    )
+    
+    const response = await uploadAPI.post('/api/audios/upload', formData)
+    
+    console.log('✅ Song upload successful:', response.data)
+    
+    return {
+      success: true,
+      data: response.data,
+      message: response.data?.message || 'Song uploaded successfully!'
+    }
+  } catch (error) {
+    console.error('❌ Song upload failed:', error)
+    
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Upload failed. Please try again.',
+      error: error.response?.data || error.message
+    }
   }
 }
 
@@ -207,8 +318,112 @@ export const searchSongs = async (query, limit = 50) => {
     
     return filteredSongs.slice(0, limit)
   } catch (error) {
-    console.error('Error searching songs:', error)
+    console.error('❌ Error searching songs:', error)
     throw error
+  }
+}
+
+/**
+ * Get user's favorite songs
+ */
+export const fetchUserFavorites = async () => {
+  try {
+    console.log('❤️ Fetching user favorites...')
+    const response = await api.get('/api/users/favorites')
+    
+    const favoritesData = response.data?.data || response.data?.favorites || []
+    return transformApiSongs(favoritesData)
+  } catch (error) {
+    console.error('❌ Error fetching favorites:', error)
+    throw error
+  }
+}
+
+/**
+ * Add song to favorites
+ */
+export const addToFavorites = async (songId) => {
+  try {
+    console.log(`❤️ Adding song ${songId} to favorites...`)
+    const response = await api.post(`/api/users/favorites/${songId}`)
+    
+    return {
+      success: true,
+      data: response.data,
+      message: response.data?.message || 'Added to favorites!'
+    }
+  } catch (error) {
+    console.error('❌ Error adding to favorites:', error)
+    
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to add to favorites.',
+      error: error.response?.data || error.message
+    }
+  }
+}
+
+/**
+ * Remove song from favorites
+ */
+export const removeFromFavorites = async (songId) => {
+  try {
+    console.log(`💔 Removing song ${songId} from favorites...`)
+    const response = await api.delete(`/api/users/favorites/${songId}`)
+    
+    return {
+      success: true,
+      data: response.data,
+      message: response.data?.message || 'Removed from favorites!'
+    }
+  } catch (error) {
+    console.error('❌ Error removing from favorites:', error)
+    
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to remove from favorites.',
+      error: error.response?.data || error.message
+    }
+  }
+}
+
+/**
+ * Get user's uploaded songs
+ */
+export const fetchUserUploads = async () => {
+  try {
+    console.log('📤 Fetching user uploads...')
+    const response = await api.get('/api/users/uploads')
+    
+    const uploadsData = response.data?.data || response.data?.uploads || []
+    return transformApiSongs(uploadsData)
+  } catch (error) {
+    console.error('❌ Error fetching uploads:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete user's uploaded song
+ */
+export const deleteUpload = async (songId) => {
+  try {
+    console.log(`🗑️ Deleting song ${songId}...`)
+    const response = await api.delete(`/api/audios/${songId}`)
+    
+    return {
+      success: true,
+      data: response.data,
+      message: response.data?.message || 'Song deleted successfully!'
+    }
+  } catch (error) {
+    console.error('❌ Error deleting song:', error)
+    
+    return {
+      success: false,
+      message: error.response?.data?.message || 'Failed to delete song.',
+      error: error.response?.data || error.message
+    }
   }
 }
 
@@ -292,28 +507,32 @@ export const getTrendingSongs = (songs, count = 6) => {
 }
 
 /**
- * API Health Check
+ * API Health Check (unauthenticated)
  */
 export const checkApiHealth = async () => {
   try {
-    const response = await api.get('/health', { timeout: 5000 })
+    // Use a separate instance without auth for health check
+    const healthAPI = axios.create({
+      baseURL: API_BASE_URL,
+      timeout: 5000
+    })
+    
+    const response = await healthAPI.get('/health')
     return response.status === 200
   } catch (error) {
-    console.warn('API health check failed:', error.message)
+    console.warn('⚠️ API health check failed:', error.message)
     return false
   }
 }
 
 /**
- * Get API status and statistics
+ * Get API status and statistics (authenticated)
  */
 export const getApiStatus = async () => {
   try {
-    const [songsResponse] = await Promise.all([
-      api.get('/audios')
-    ])
+    const response = await api.get('/audios')
     
-    const songs = songsResponse.data?.data?.audios || songsResponse.data?.audios || []
+    const songs = response.data?.data?.audios || response.data?.audios || []
     
     return {
       isHealthy: true,
@@ -328,5 +547,17 @@ export const getApiStatus = async () => {
       error: error.message,
       lastChecked: new Date().toISOString()
     }
+  }
+}
+
+/**
+ * Helper function for making any authenticated API request
+ */
+export const makeAuthenticatedRequest = async (requestConfig) => {
+  try {
+    return await api(requestConfig)
+  } catch (error) {
+    // Error handling and retry is done by the interceptor
+    throw error
   }
 }

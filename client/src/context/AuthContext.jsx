@@ -1,6 +1,12 @@
 // context/AuthContext.jsx
 import { createContext, useContext, useReducer, useEffect } from 'react'
-import { refreshAccessToken, logoutUser } from '../utils/authUtils'
+import { refreshAccessToken, logoutUser, checkAuthSession } from '../utils/authUtils'
+
+// Development-only session persistence for localhost
+const DEV_SESSION_KEY = 'dev_auth_session'
+const isDevelopment = process.env.NODE_ENV === 'development'
+const isLocalhost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
 
 const AuthContext = createContext()
 
@@ -17,7 +23,6 @@ const authReducer = (state, action) => {
         ...state,
         isAuthenticated: true,
         user: action.payload.user,
-        accessToken: action.payload.accessToken,
         isLoading: false,
         error: null
       }
@@ -26,7 +31,6 @@ const authReducer = (state, action) => {
         ...state,
         isAuthenticated: false,
         user: null,
-        accessToken: null,
         isLoading: false,
         error: null
       }
@@ -36,10 +40,11 @@ const authReducer = (state, action) => {
         error: action.payload,
         isLoading: false
       }
-    case 'UPDATE_ACCESS_TOKEN':
+    case 'REFRESH_SUCCESS':
       return {
         ...state,
-        accessToken: action.payload
+        user: action.payload.user || state.user, // Update user if provided
+        error: null
       }
     default:
       return state
@@ -49,7 +54,6 @@ const authReducer = (state, action) => {
 const initialState = {
   isAuthenticated: false,
   user: null,
-  accessToken: null, // Stored only in memory
   isLoading: true, // Start with loading to check for existing session
   error: null
 }
@@ -63,27 +67,51 @@ export const AuthProvider = ({ children }) => {
       try {
         dispatch({ type: 'SET_LOADING', payload: true })
         
-        // Try to refresh access token using existing refresh token cookie
-        const result = await refreshAccessToken()
+        // Development workaround: Check sessionStorage first on localhost
+        if (isDevelopment && isLocalhost) {
+          try {
+            const savedSession = sessionStorage.getItem(DEV_SESSION_KEY)
+            if (savedSession) {
+              const { user: savedUser, timestamp } = JSON.parse(savedSession)
+              
+              // Check if session is less than 8 hours old
+              const maxAge = 8 * 60 * 60 * 1000 // 8 hours
+              if (Date.now() - timestamp < maxAge && savedUser) {
+                console.log('🔄 [DEV] Restoring session from sessionStorage:', savedUser)
+                dispatch({
+                  type: 'LOGIN_SUCCESS',
+                  payload: { user: savedUser }
+                })
+                return // Skip API call if we restored from sessionStorage
+              } else {
+                sessionStorage.removeItem(DEV_SESSION_KEY)
+              }
+            }
+          } catch (error) {
+            console.error('❌ [DEV] Error restoring session:', error)
+            sessionStorage.removeItem(DEV_SESSION_KEY)
+          }
+        }
         
-        console.log('Session check result:', result) // Debug log
+        // Try to verify existing session using HTTP-only cookies
+        const result = await checkAuthSession()
         
-        if (result.success) {
+        console.log('Session check result:', result)
+        
+        if (result.success && result.user) {
           console.log('Existing session found:', result)
-          console.log('User data:', result.user) // Debug user data
           dispatch({
             type: 'LOGIN_SUCCESS',
             payload: {
-              user: result.user || result.data?.data || result.data?.user,
-              accessToken: result.accessToken || result.data?.metadata?.accessToken
+              user: result.user
             }
           })
         } else {
-          // No valid refresh token or session expired
+          // No valid session
           dispatch({ type: 'SET_LOADING', payload: false })
         }
       } catch (error) {
-        console.log('No existing session found')
+        console.log('No existing session found:', error.message)
         dispatch({ type: 'SET_LOADING', payload: false })
       }
     }
@@ -91,33 +119,69 @@ export const AuthProvider = ({ children }) => {
     checkExistingSession()
   }, [])
 
-  // Login function
-  const login = (user, accessToken) => {
+  // Login function - only stores user data, tokens are HTTP-only
+  const login = (user) => {
     dispatch({
       type: 'LOGIN_SUCCESS',
-      payload: { user, accessToken }
+      payload: { user }
     })
+
+    // Development workaround: Save to sessionStorage on localhost
+    if (isDevelopment && isLocalhost && user) {
+      try {
+        sessionStorage.setItem(DEV_SESSION_KEY, JSON.stringify({
+          user,
+          timestamp: Date.now()
+        }))
+        console.log('💾 [DEV] Session saved to sessionStorage')
+      } catch (error) {
+        console.error('❌ [DEV] Error saving session:', error)
+      }
+    }
   }
 
   // Logout function
   const logout = async () => {
     try {
-      // Call logout API to clear httpOnly cookies
+      // Call logout API to clear HTTP-only cookies
       await logoutUser()
     } catch (error) {
       console.error('Logout API call failed:', error)
     } finally {
       // Always clear local state
       dispatch({ type: 'LOGOUT' })
+      
+      // Development workaround: Clear sessionStorage on localhost
+      if (isDevelopment && isLocalhost) {
+        try {
+          sessionStorage.removeItem(DEV_SESSION_KEY)
+          console.log('🗑️ [DEV] Session cleared from sessionStorage')
+        } catch (error) {
+          console.error('❌ [DEV] Error clearing session:', error)
+        }
+      }
     }
   }
 
-  // Update access token (for silent refresh)
-  const updateAccessToken = (newToken) => {
-    dispatch({
-      type: 'UPDATE_ACCESS_TOKEN',
-      payload: newToken
-    })
+  // Silent refresh function (called by interceptor)
+  const silentRefresh = async () => {
+    try {
+      const result = await refreshAccessToken()
+      
+      if (result.success) {
+        dispatch({
+          type: 'REFRESH_SUCCESS',
+          payload: { user: result.user }
+        })
+        return true
+      }
+      return false
+    } catch (error) {
+      console.error('Silent refresh failed:', error)
+      // Force logout on refresh failure
+      dispatch({ type: 'LOGOUT' })
+      return false
+    }
   }
 
   // Set error
@@ -132,7 +196,7 @@ export const AuthProvider = ({ children }) => {
     ...state,
     login,
     logout,
-    updateAccessToken,
+    silentRefresh,
     setError
   }
 

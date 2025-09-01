@@ -1,3 +1,4 @@
+// components/authentication/AuthenticationModals.jsx
 import { useState, useEffect } from "react"
 import { Formik, Field } from "formik"
 import { useAuth } from "../../context/AuthContext"
@@ -104,8 +105,8 @@ export default function AuthenticationModals({
       if (result.success) {
         showToast(result.message || 'Successfully signed in!', 'success')
         
-        // Update auth context with user and token
-        login(result.user, result.accessToken)
+        // Update auth context with user data (tokens are HTTP-only cookies)
+        login(result.user)
         
         clearAllForms()
         
@@ -145,8 +146,8 @@ export default function AuthenticationModals({
       if (result.success) {
         showToast(result.message || 'Account created successfully!', 'success')
         
-        // Update auth context with user and token
-        login(result.user, result.accessToken)
+        // Update auth context with user data (tokens are HTTP-only cookies)
+        login(result.user)
         
         clearAllForms()
         
