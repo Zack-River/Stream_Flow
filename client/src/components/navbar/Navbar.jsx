@@ -4,7 +4,6 @@ import { useTheme } from "../../context/ThemeContext"
 import logoImage from "../../assets/logo.png"
 import { Search, Home, Menu, Sun, Moon, User, Settings, LogOut } from "lucide-react"
 import AuthenticationModals from "../authentication/AuthenticationModals"
-import { logoutUser } from "../../utils/authUtils"
 
 export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthenticated, setIsAuthenticated }) {
   const { isDark, toggleTheme } = useTheme()
@@ -56,21 +55,6 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
   const handleSignUpClick = () => {
     setAuthMode("signup")
     setShowAuthModal(true)
-  }
-
-  const handleLogout = async () => {
-    try {
-      const result = await logoutUser()
-      if (result.success) {
-        setIsAuthenticated(false)
-        // Optional: Show success toast
-        console.log(result.message)
-      } else {
-        console.error('Logout failed:', result.message)
-      }
-    } catch (error) {
-      console.error('Logout error:', error)
-    }
   }
 
   const handleSearchInputChange = (e) => {
@@ -201,8 +185,8 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
 
                     <button
                       onClick={() => {
-                        handleLogout()
                         setShowUserMenu(false)
+                        setIsAuthenticated(false)
                       }}
                       className="flex items-center px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors rounded-xl mx-2 w-11/12 text-left"
                     >
@@ -223,7 +207,6 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
         onClose={() => setShowAuthModal(false)}
         initialMode={authMode}
         onAuthSuccess={() => setIsAuthenticated(true)}
-        setIsAuthenticated={setIsAuthenticated}
       />
     </>
   )
