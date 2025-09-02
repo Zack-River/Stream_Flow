@@ -1,7 +1,6 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 import { MusicProvider } from "./context/MusicContext"
 import { ThemeProvider } from "./context/ThemeContext"
-import { AuthProvider } from "./context/AuthContext"
 import Layout from "./components/layout/Layout"
 import HomePage from "./components/home/HomePage"
 import UploadsPage from "./components/uploads/UploadsPage"
@@ -27,11 +26,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <MusicProvider>
-          <RouterProvider router={router} />
-        </MusicProvider>
-      </AuthProvider>
+      <MusicProvider>
+        <RouterProvider router={router} />
+      </MusicProvider>
     </ThemeProvider>
   )
 }

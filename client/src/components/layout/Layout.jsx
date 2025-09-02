@@ -1,19 +1,15 @@
 import { useState } from "react"
 import { Outlet } from "react-router-dom"
-import { useAuth } from "../../context/AuthContext"
 import Sidebar from "../sidebars/Sidebar"
 import Navbar from "../navbar/Navbar"
 import RightSidebar from "../sidebars/RightSidebar"
-import AudioPlayer from '../audioPlayer/AudioPlayer'
-import LoadingSpinner from '../common/LoadingSpinner'
-import DebugAuthStatus from '../debug/DebugAuthStatus'
+import AudioPlayer from '../audioPlayer/AudioPlayer';
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  
-  const { isAuthenticated, isLoading } = useAuth()
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   const toggleRightSidebar = () => {
     setIsRightSidebarOpen(!isRightSidebarOpen)
@@ -27,15 +23,6 @@ export default function Layout() {
     setSearchQuery("")
   }
 
-  // Show loading spinner while checking authentication status
-  if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <LoadingSpinner />
-      </div>
-    )
-  }
-
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       <Navbar 
@@ -43,18 +30,18 @@ export default function Layout() {
         onSearch={handleSearch}
         searchQuery={searchQuery}
         isAuthenticated={isAuthenticated}
+        setIsAuthenticated={setIsAuthenticated}
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
           <div className="p-6">
-            <Outlet context={{ searchQuery, clearSearch, isAuthenticated }} />
+            <Outlet context={{ searchQuery, clearSearch, isAuthenticated, setIsAuthenticated }} />
           </div>
         </main>
         <RightSidebar isOpen={isRightSidebarOpen} onClose={() => setIsRightSidebarOpen(false)} />
       </div>
       <AudioPlayer onToggleRightSidebar={toggleRightSidebar} isRightSidebarOpen={isRightSidebarOpen} />
-      <DebugAuthStatus />
     </div>
   )
 }
