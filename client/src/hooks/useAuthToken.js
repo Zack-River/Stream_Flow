@@ -1,118 +1,70 @@
 import { useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { refreshAccessToken, setAuthContext, hasAuthCookies } from '../utils/authUtils'
+import { setTokenUpdateCallback, refreshAccessToken } from '../utils/authUtils'
 
 export const useAuthToken = () => {
-  const authContext = useAuth()
-  const { isAuthenticated, logout } = authContext
+  const { accessToken, updateAccessToken, logout } = useAuth()
   const refreshTimeoutRef = useRef(null)
-  const refreshIntervalRef = useRef(null)
 
-  // Set up auth context reference for utils
   useEffect(() => {
-    setAuthContext(authContext)
-    
+    // Set up token update callback
+    setTokenUpdateCallback(updateAccessToken)
+
+    return () => {
+      // Clear timeout on cleanup
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+    }
+  }, [updateAccessToken])
+
+  // Auto-refresh token before expiration
+  useEffect(() => {
+    if (!accessToken) return
+
+    try {
+      // Decode JWT to get expiration time
+      const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]))
+      const expirationTime = tokenPayload.exp * 1000 // Convert to milliseconds
+      const currentTime = Date.now()
+      const timeUntilExpiry = expirationTime - currentTime
+      
+      // Refresh 5 minutes before expiration, or immediately if token expires in less than 5 minutes
+      const refreshTime = Math.max(timeUntilExpiry - 5 * 60 * 1000, 60 * 1000) // Minimum 1 minute
+
+      if (refreshTime > 0) {
+        refreshTimeoutRef.current = setTimeout(async () => {
+          try {
+            console.log('Auto-refreshing access token...')
+            await refreshAccessToken()
+          } catch (error) {
+            console.error('Auto-refresh failed:', error)
+            // If refresh fails, logout user
+            logout()
+          }
+        }, refreshTime)
+      } else {
+        // Token is already expired or expires very soon, try to refresh immediately
+        refreshAccessToken().catch((error) => {
+          console.error('Immediate refresh failed:', error)
+          logout()
+        })
+      }
+    } catch (error) {
+      console.error('Error decoding token:', error)
+      // Invalid token, logout user
+      logout()
+    }
+
     return () => {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current)
       }
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current)
-      }
     }
-  }, [authContext])
-
-  // Periodic session validation when authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      // Clear intervals when not authenticated
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current)
-        refreshIntervalRef.current = null
-      }
-      return
-    }
-
-    // Check session validity every 10 minutes
-    const checkSession = async () => {
-      try {
-        // If cookies are missing, user was logged out externally
-        if (!hasAuthCookies()) {
-          console.log('🍪 Auth cookies missing, logging out...')
-          await logout()
-          return
-        }
-
-        // Try to refresh token to ensure session is still valid
-        const result = await refreshAccessToken()
-        
-        if (!result.success) {
-          console.log('🔄 Session validation failed, logging out...')
-          await logout()
-        } else {
-          console.log('✅ Session validated successfully')
-        }
-      } catch (error) {
-        console.error('❌ Session validation error:', error)
-        await logout()
-      }
-    }
-
-    // Initial check
-    checkSession()
-
-    // Set up periodic checking
-    refreshIntervalRef.current = setInterval(checkSession, 10 * 60 * 1000) // Every 10 minutes
-
-    return () => {
-      if (refreshIntervalRef.current) {
-        clearInterval(refreshIntervalRef.current)
-      }
-    }
-  }, [isAuthenticated, logout])
-
-  // Proactive token refresh before expiration (estimated)
-  useEffect(() => {
-    if (!isAuthenticated) return
-
-    // Since tokens are HTTP-only, we can't read their expiration
-    // Set up proactive refresh every 50 minutes (assuming 1-hour access token)
-    const proactiveRefresh = async () => {
-      try {
-        console.log('🔄 Proactive token refresh...')
-        await refreshAccessToken()
-        console.log('✅ Proactive refresh successful')
-      } catch (error) {
-        console.error('❌ Proactive refresh failed:', error)
-        // Don't force logout on proactive refresh failure
-        // Let the API request interceptor handle it
-      }
-    }
-
-    // Refresh every 50 minutes when authenticated
-    refreshTimeoutRef.current = setInterval(proactiveRefresh, 50 * 60 * 1000)
-
-    return () => {
-      if (refreshTimeoutRef.current) {
-        clearInterval(refreshTimeoutRef.current)
-      }
-    }
-  }, [isAuthenticated])
-
-  // Manual refresh function
-  const manualRefresh = async () => {
-    try {
-      const result = await refreshAccessToken()
-      return result.success
-    } catch (error) {
-      console.error('Manual refresh failed:', error)
-      return false
-    }
-  }
+  }, [accessToken, logout])
 
   return {
-    isTokenValid: isAuthenticated && hasAuthCookies(),
-    hasAuthCookies: hasAuthCookies(),
-    manualRefresh
+    accessToken,
+    isTokenValid: !!accessToken
   }
 }

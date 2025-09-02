@@ -1,4 +1,3 @@
-// components/layout/Layout.jsx
 import { useState } from "react"
 import { Outlet } from "react-router-dom"
 import { useAuth } from "../../context/AuthContext"
@@ -8,7 +7,6 @@ import RightSidebar from "../sidebars/RightSidebar"
 import AudioPlayer from '../audioPlayer/AudioPlayer'
 import LoadingSpinner from '../common/LoadingSpinner'
 import DebugAuthStatus from '../debug/DebugAuthStatus'
-import AuthSessionManager from '../authentication/AuthSessionManager'
 
 export default function Layout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
@@ -33,16 +31,13 @@ export default function Layout() {
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <LoadingSpinner message="Checking authentication..." />
+        <LoadingSpinner />
       </div>
     )
   }
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-      {/* Session Manager - handles automatic token refresh and session validation */}
-      <AuthSessionManager />
-      
       <Navbar 
         onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
         onSearch={handleSearch}
