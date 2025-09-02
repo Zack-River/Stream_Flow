@@ -4,7 +4,6 @@ import { useAuth } from "../../context/AuthContext"
 import FormInput from "../FormInput/FormInput"
 import * as Yup from "yup"
 import { X, Mail, Lock, User } from "lucide-react"
-import { showAuthToast, showWelcomeToast } from "../../utils/toastUtils"
 
 // Validation schemas
 const signInSchema = Yup.object({
@@ -38,13 +37,12 @@ const signUpSchema = Yup.object({
     .required("Please confirm your password")
 })
 
-export default function AuthenticationModals({ isOpen, onClose, initialMode, onAuthSuccess }) {
+export default function AuthenticationModals({ isOpen, onClose, initialMode, onAuthSuccess, showAuthToast }) {
   const { login, register, isLoading } = useAuth()
   const [mode, setMode] = useState(initialMode)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
-
   const [rememberMe, setRememberMe] = useState(true)
 
   // Persistent form values using useState
@@ -70,8 +68,6 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
     }
   }, [isOpen, initialMode])
 
-
-
   // Handle form submissions
   const handleSignInSubmit = async (values, { setSubmitting, setFieldError }) => {
     try {
@@ -84,16 +80,18 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
       
       if (result.success) {
         if (result.alreadyLoggedIn) {
-          showAuthToast('You are already logged in!', true)
+          if (showAuthToast) {
+            showAuthToast('You are already logged in!', true)
+          }
         } else {
-          showWelcomeToast(result.user?.username || result.user?.name)
+          // Let the parent handle the welcome toast
+          if (onAuthSuccess) {
+            onAuthSuccess(result.user, false) // false = not registration
+          }
         }
         
         // Clear form and close modal
         clearAllForms()
-        if (onAuthSuccess) {
-          onAuthSuccess(result.user)
-        }
         handleClose()
       }
     } catch (error) {
@@ -108,7 +106,9 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
         }
       }
       
-      showAuthToast(error.message, false)
+      if (showAuthToast) {
+        showAuthToast(error.message, false)
+      }
     } finally {
       setSubmitting(false)
     }
@@ -127,13 +127,13 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
       const result = await register(userData, null)
       
       if (result.success) {
-        showWelcomeToast(result.user?.username || result.user?.name)
+        // Let the parent handle the registration toast
+        if (onAuthSuccess) {
+          onAuthSuccess(result.user, true) // true = registration
+        }
         
         // Clear form and close modal
         clearAllForms()
-        if (onAuthSuccess) {
-          onAuthSuccess(result.user)
-        }
         handleClose()
       }
     } catch (error) {
@@ -146,7 +146,9 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
         setFieldError('email', 'Email already exists')
       }
       
-      showAuthToast(error.message, false)
+      if (showAuthToast) {
+        showAuthToast(error.message, false)
+      }
     } finally {
       setSubmitting(false)
     }

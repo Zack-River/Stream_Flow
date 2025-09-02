@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTheme } from "../../context/ThemeContext"
 import { useAuth } from "../../context/AuthContext"
+import { ToastContainer, useToast } from "../common/Toast"
+import { PuffLoader } from 'react-spinners'
 import logoImage from "../../assets/logo.png"
 import { Search, Home, Menu, Sun, Moon, User, Settings, LogOut } from "lucide-react"
 import AuthenticationModals from "../authentication/AuthenticationModals"
-import { showGoodbyeToast } from "../../utils/toastUtils"
 
 export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading }) {
   const { isDark, toggleTheme } = useTheme()
@@ -17,6 +18,16 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
   const location = useLocation()
 
   const userMenuRef = useRef(null)
+
+  // Toast hook
+  const {
+    toasts,
+    removeToast,
+    showGoodbyeToast,
+    showWelcomeToast,
+    showRegistrationToast,
+    showAuthToast
+  } = useToast()
 
   // Check if current page is home
   const isHome = location.pathname === '/'
@@ -87,9 +98,15 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
     }
   }
 
-  const handleAuthSuccess = (userData) => {
+  const handleAuthSuccess = (userData, isRegistration = false) => {
     console.log('Authentication successful:', userData)
-    // Modal will close automatically, and toast is shown in the modal
+    
+    // Show appropriate welcome toast
+    if (isRegistration) {
+      showRegistrationToast(userData?.username || userData?.name)
+    } else {
+      showWelcomeToast(userData?.username || userData?.name)
+    }
   }
 
   return (
@@ -163,8 +180,12 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
             {!isAuthenticated ? (
               <div className="flex items-center space-x-2">
                 {authLoading ? (
-                  <div className="flex items-center space-x-2">
-                    <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="flex items-center space-x-3 px-4 py-2">
+                    <PuffLoader
+                      color="#7C3AED"
+                      size={20}
+                      loading={true}
+                    />
                     <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
                       Loading...
                     </span>
@@ -241,10 +262,23 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                     <button
                       onClick={handleLogout}
                       disabled={authLoading}
-                      className="flex items-center px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors rounded-xl mx-2 w-11/12 text-left disabled:opacity-50"
+                      className="flex items-center px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors rounded-xl mx-2 w-11/12 text-left disabled:opacity-50 group"
                     >
-                      <LogOut className="w-4 h-4 mr-3" />
-                      {authLoading ? 'Logging out...' : 'Logout'}
+                      {authLoading ? (
+                        <>
+                          <PuffLoader
+                            color="#DC2626"
+                            size={14}
+                            loading={true}
+                          />
+                          <span className="ml-3">Logging out...</span>
+                        </>
+                      ) : (
+                        <>
+                          <LogOut className="w-4 h-4 mr-3" />
+                          Logout
+                        </>
+                      )}
                     </button>
                   </div>
                 )}
@@ -260,7 +294,11 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
         onClose={() => setShowAuthModal(false)}
         initialMode={authMode}
         onAuthSuccess={handleAuthSuccess}
+        showAuthToast={showAuthToast}
       />
+
+      {/* Toast Container */}
+      <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
     </>
   )
 }
