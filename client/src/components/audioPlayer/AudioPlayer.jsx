@@ -89,6 +89,9 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
       audioRef.current.src = audioUrl
       audioRef.current.load()
       audioRef.current.currentTime = 0 // Ensure reset
+      
+      // IMPORTANT: Apply volume immediately after loading new song
+      audioRef.current.volume = volume
     }
 
     // Cancel any existing animation
@@ -101,7 +104,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [currentSongId, dispatch])
+  }, [currentSongId, dispatch]) // Removed volume dependency to prevent restart
 
   // Manual time updates for problematic audio sources
   const updateTimeManually = () => {
@@ -132,6 +135,9 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
 
     const handleLoadedData = () => {
       setAudioLoaded(true)
+      // Apply volume when audio data is loaded
+      audio.volume = volume
+      
       if (audio.readyState >= 2) {
         const validDuration = audio.duration !== Infinity ? audio.duration : 0
         dispatch({ type: "SET_DURATION", payload: validDuration })
@@ -146,6 +152,9 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
 
     const handleCanPlay = () => {
       setAudioLoaded(true)
+      // Apply volume when audio can play
+      audio.volume = volume
+      
       if (audio.duration !== Infinity && !isNaN(audio.duration)) {
         dispatch({ type: "SET_DURATION", payload: audio.duration })
       }
@@ -184,6 +193,14 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
       dispatch({ type: "SET_TIME", payload: audio.currentTime })
     }
 
+    // Add volume change handler to ensure consistency
+    const handleVolumeChange = () => {
+      // Sync audio volume with our state if they get out of sync
+      if (Math.abs(audio.volume - volume) > 0.01) {
+        audio.volume = volume
+      }
+    }
+
     audio.addEventListener("timeupdate", handleTimeUpdate)
     audio.addEventListener("loadeddata", handleLoadedData)
     audio.addEventListener("durationchange", handleDurationChange)
@@ -192,6 +209,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     audio.addEventListener("error", handleError)
     audio.addEventListener("seeking", handleSeeking)
     audio.addEventListener("seeked", handleSeeked)
+    audio.addEventListener("volumechange", handleVolumeChange)
 
     return () => {
       audio.removeEventListener("timeupdate", handleTimeUpdate)
@@ -202,8 +220,9 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
       audio.removeEventListener("error", handleError)
       audio.removeEventListener("seeking", handleSeeking)
       audio.removeEventListener("seeked", handleSeeked)
+      audio.removeEventListener("volumechange", handleVolumeChange)
     }
-  }, [dispatch, isDragging, repeatMode])
+  }, [dispatch, isDragging, repeatMode]) // Removed volume dependency to prevent restart
 
   // Play/pause control
   useEffect(() => {
@@ -212,6 +231,9 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
 
     const playAudio = async () => {
       try {
+        // Ensure volume is set before playing
+        audio.volume = volume
+
         // Start manual time updates as fallback
         if (animationRef.current) {
           cancelAnimationFrame(animationRef.current)
@@ -221,9 +243,14 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
         // Ensure audio is properly loaded
         if (!audioLoaded) {
           audio.load()
+          // Apply volume after loading
+          audio.volume = volume
+          
           await new Promise(resolve => {
             const checkReady = () => {
               if (audio.readyState >= 3) { // HAVE_FUTURE_DATA
+                // Ensure volume is still correct
+                audio.volume = volume
                 resolve()
               } else {
                 setTimeout(checkReady, 100)
@@ -235,10 +262,13 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
 
         await audio.play()
 
-        // Refresh duration after playback starts
+        // Refresh duration after playback starts and ensure volume
         if (audio.duration !== Infinity && !isNaN(audio.duration)) {
           dispatch({ type: "SET_DURATION", payload: audio.duration })
         }
+        
+        // Final volume check
+        audio.volume = volume
       } catch (error) {
         console.error("Playback error:", error)
         dispatch({ type: "SET_PLAYING", payload: false })
@@ -247,6 +277,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
           console.log("Retrying playback...")
           setTimeout(() => {
             audio.load()
+            audio.volume = volume // Apply volume before retry
             audio.play().catch(e => console.error("Retry failed:", e))
           }, 300)
         }
@@ -267,13 +298,20 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [isPlaying, currentSong, dispatch, audioLoaded])
+  }, [isPlaying, currentSong, dispatch, audioLoaded]) // Removed volume dependency to prevent restart
 
-  // Volume control
+  // Volume control - Enhanced to handle both user preference and immediate application
   useEffect(() => {
     const audio = audioRef.current
     if (audio) {
       audio.volume = volume
+      
+      // For extra safety, set a small delay for stubborn audio sources
+      setTimeout(() => {
+        if (audio.volume !== volume) {
+          audio.volume = volume
+        }
+      }, 100)
     }
   }, [volume])
 
@@ -284,10 +322,21 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
   const handleVolumeChange = (e) => {
     const newVolume = Number.parseFloat(e.target.value)
     dispatch({ type: "SET_VOLUME", payload: newVolume })
+    
+    // Apply immediately to audio element
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume
+    }
   }
 
   const toggleMute = () => {
-    dispatch({ type: "SET_VOLUME", payload: volume > 0 ? 0 : 0.7 })
+    const newVolume = volume > 0 ? 0 : 0.7
+    dispatch({ type: "SET_VOLUME", payload: newVolume })
+    
+    // Apply immediately to audio element
+    if (audioRef.current) {
+      audioRef.current.volume = newVolume
+    }
   }
 
   const handleVolumeClick = () => {
