@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
 import { Formik, Field } from "formik"
+import { useAuth } from "../../context/AuthContext"
 import FormInput from "../FormInput/FormInput"
 import * as Yup from "yup"
 import { X, Mail, Lock, User } from "lucide-react"
+import { showAuthToast, showWelcomeToast } from "../../utils/toastUtils"
 
 // Validation schemas
 const signInSchema = Yup.object({
@@ -36,11 +38,14 @@ const signUpSchema = Yup.object({
     .required("Please confirm your password")
 })
 
-export default function AuthenticationModals({ isOpen, onClose, initialMode = "signin" }) {
+export default function AuthenticationModals({ isOpen, onClose, initialMode, onAuthSuccess }) {
+  const { login, register, isLoading } = useAuth()
   const [mode, setMode] = useState(initialMode)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+
+  const [rememberMe, setRememberMe] = useState(true)
 
   // Persistent form values using useState
   const [signInValues, setSignInValues] = useState({
@@ -65,29 +70,93 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
     }
   }, [isOpen, initialMode])
 
+
+
   // Handle form submissions
-  const handleSignInSubmit = (values, { setSubmitting }) => {
-    console.log("Sign in validated:", values)
-    // API call will go here
-    setSubmitting(false)
-    // Clear form on successful submission
-    clearAllForms()
-    // You can call onClose() here after successful authentication
+  const handleSignInSubmit = async (values, { setSubmitting, setFieldError }) => {
+    try {
+      console.log("Sign in attempt:", values.email)
+      
+      const result = await login({
+        email: values.email,
+        password: values.password
+      }, rememberMe)
+      
+      if (result.success) {
+        if (result.alreadyLoggedIn) {
+          showAuthToast('You are already logged in!', true)
+        } else {
+          showWelcomeToast(result.user?.username || result.user?.name)
+        }
+        
+        // Clear form and close modal
+        clearAllForms()
+        if (onAuthSuccess) {
+          onAuthSuccess(result.user)
+        }
+        handleClose()
+      }
+    } catch (error) {
+      console.error('Sign in error:', error)
+      
+      // Handle specific field errors
+      if (error.message.includes('email') || error.message.includes('password')) {
+        if (error.message.toLowerCase().includes('email')) {
+          setFieldError('email', error.message)
+        } else {
+          setFieldError('password', error.message)
+        }
+      }
+      
+      showAuthToast(error.message, false)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const handleSignUpSubmit = (values, { setSubmitting }) => {
-    console.log("Sign up validated:", values)
-    // API call will go here
-    setSubmitting(false)
-    // Clear form on successful submission
-    clearAllForms()
-    // You can call onClose() here after successful authentication
+  const handleSignUpSubmit = async (values, { setSubmitting, setFieldError }) => {
+    try {
+      console.log("Sign up attempt:", values.username, values.email)
+      
+      const userData = {
+        username: values.username,
+        email: values.email,
+        password: values.password
+      }
+      
+      const result = await register(userData, null)
+      
+      if (result.success) {
+        showWelcomeToast(result.user?.username || result.user?.name)
+        
+        // Clear form and close modal
+        clearAllForms()
+        if (onAuthSuccess) {
+          onAuthSuccess(result.user)
+        }
+        handleClose()
+      }
+    } catch (error) {
+      console.error('Sign up error:', error)
+      
+      // Handle specific field errors
+      if (error.message.toLowerCase().includes('username')) {
+        setFieldError('username', 'Username already exists')
+      } else if (error.message.toLowerCase().includes('email')) {
+        setFieldError('email', 'Email already exists')
+      }
+      
+      showAuthToast(error.message, false)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const switchMode = (newMode) => {
     setMode(newMode)
     setShowPassword(false)
     setShowConfirmPassword(false)
+    setRememberMe(false)
   }
 
   const handleClose = () => {
@@ -96,6 +165,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
       setMode("signin")
       setShowPassword(false)
       setShowConfirmPassword(false)
+      setRememberMe(false)
       onClose()
     }, 300)
   }
@@ -118,6 +188,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
       password: "",
       confirmPassword: ""
     })
+    setRememberMe(false)
   }
 
   if (!isOpen) return null
@@ -128,8 +199,9 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
       onClick={handleBackgroundClick}
     >
       <div
-        className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 w-full max-w-md transform transition-all duration-300 ${isVisible ? "translate-y-0 opacity-100 scale-100" : "translate-y-8 opacity-0 scale-95"
-          }`}
+        className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 w-full max-w-md transform transition-all duration-300 ${
+          isVisible ? "translate-y-0 opacity-100 scale-100" : "translate-y-8 opacity-0 scale-95"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -140,6 +212,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
           <button
             onClick={handleClose}
             className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            disabled={isLoading}
           >
             <X className="w-5 h-5" />
           </button>
@@ -191,10 +264,10 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isLoading}
                       className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
-                      {isSubmitting ? "Signing In..." : "Sign In"}
+                      {isSubmitting || isLoading ? "Signing In..." : "Sign In"}
                     </button>
 
                     <p className="text-center text-gray-600 dark:text-gray-400 text-sm mt-4">
@@ -202,7 +275,8 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
                       <button
                         type="button"
                         onClick={() => switchMode("signup")}
-                        className="text-purple-600 hover:text-purple-700 font-semibold transition-colors"
+                        disabled={isSubmitting || isLoading}
+                        className="text-purple-600 hover:text-purple-700 font-semibold transition-colors disabled:opacity-50"
                       >
                         Sign up here
                       </button>
@@ -286,10 +360,10 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
                     <button
                       type="button"
                       onClick={handleSubmit}
-                      disabled={isSubmitting}
+                      disabled={isSubmitting || isLoading}
                       className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
-                      {isSubmitting ? "Creating Account..." : "Create Account"}
+                      {isSubmitting || isLoading ? "Creating Account..." : "Create Account"}
                     </button>
 
                     <p className="text-center text-gray-600 dark:text-gray-400 text-sm mt-4">
@@ -297,7 +371,8 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode = "s
                       <button
                         type="button"
                         onClick={() => switchMode("signin")}
-                        className="text-purple-600 hover:text-purple-700 font-semibold transition-colors"
+                        disabled={isSubmitting || isLoading}
+                        className="text-purple-600 hover:text-purple-700 font-semibold transition-colors disabled:opacity-50"
                       >
                         Sign in here
                       </button>

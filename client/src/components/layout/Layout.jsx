@@ -1,15 +1,16 @@
 import { useState } from "react"
 import { Outlet } from "react-router-dom"
+import { useAuth } from "../../context/AuthContext"
 import Sidebar from "../sidebars/Sidebar"
 import Navbar from "../navbar/Navbar"
 import RightSidebar from "../sidebars/RightSidebar"
 import AudioPlayer from '../audioPlayer/AudioPlayer';
 
 export default function Layout() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
 
   const toggleRightSidebar = () => {
     setIsRightSidebarOpen(!isRightSidebarOpen)
@@ -24,19 +25,24 @@ export default function Layout() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen flex flex-col bg-gray-50 top dark:bg-gray-900">
       <Navbar 
         onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} 
         onSearch={handleSearch}
         searchQuery={searchQuery}
         isAuthenticated={isAuthenticated}
-        setIsAuthenticated={setIsAuthenticated}
+        authLoading={authLoading}
       />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
         <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
           <div className="p-6">
-            <Outlet context={{ searchQuery, clearSearch, isAuthenticated, setIsAuthenticated }} />
+            <Outlet context={{ 
+              searchQuery, 
+              clearSearch, 
+              isAuthenticated, 
+              authLoading 
+            }} />
           </div>
         </main>
         <RightSidebar isOpen={isRightSidebarOpen} onClose={() => setIsRightSidebarOpen(false)} />

@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTheme } from "../../context/ThemeContext"
+import { useAuth } from "../../context/AuthContext"
 import logoImage from "../../assets/logo.png"
 import { Search, Home, Menu, Sun, Moon, User, Settings, LogOut } from "lucide-react"
 import AuthenticationModals from "../authentication/AuthenticationModals"
+import { showGoodbyeToast } from "../../utils/toastUtils"
 
-export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthenticated, setIsAuthenticated }) {
+export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading }) {
   const { isDark, toggleTheme } = useTheme()
+  const { isAuthenticated, user, logout } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || "")
   const [showAuthModal, setShowAuthModal] = useState(false)
@@ -57,6 +60,18 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
     setShowAuthModal(true)
   }
 
+  const handleLogout = async () => {
+    setShowUserMenu(false)
+    try {
+      await logout()
+      showGoodbyeToast()
+    } catch (error) {
+      console.error('Logout error:', error)
+      // Logout should still work even if there's an error
+      showGoodbyeToast()
+    }
+  }
+
   const handleSearchInputChange = (e) => {
     const value = e.target.value
     setLocalSearchQuery(value)
@@ -70,6 +85,11 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
     if (onSearch) {
       onSearch("")
     }
+  }
+
+  const handleAuthSuccess = (userData) => {
+    console.log('Authentication successful:', userData)
+    // Modal will close automatically, and toast is shown in the modal
   }
 
   return (
@@ -99,10 +119,11 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
           <div className="flex items-center space-x-2 sm:space-x-4 flex-1 justify-center max-w-2xl">
             <Link
               to="/"
-              className={`hidden lg:block p-3 rounded-xl transition-all duration-300 transform hover:scale-110 ${isHome
-                ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-                : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
-                }`}
+              className={`hidden lg:block p-3 rounded-xl transition-all duration-300 transform hover:scale-110 ${
+                isHome
+                  ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+              }`}
             >
               <Home className="w-5 h-5" />
             </Link>
@@ -141,30 +162,64 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
             {/* Authentication buttons or User menu */}
             {!isAuthenticated ? (
               <div className="flex items-center space-x-2">
-                <button
-                  onClick={handleSignUpClick}
-                  className="hidden sm:block px-4 py-2 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded-xl transition-all duration-300 font-medium"
-                >
-                  Sign Up
-                </button>
-                <button
-                  onClick={handleSignInClick}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
-                >
-                  Sign In
-                </button>
+                {authLoading ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 border-2 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
+                      Loading...
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleSignUpClick}
+                      className="hidden sm:block px-4 py-2 text-purple-600 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-900/20 rounded-xl transition-all duration-300 font-medium"
+                    >
+                      Sign Up
+                    </button>
+                    <button
+                      onClick={handleSignInClick}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
+                    >
+                      Sign In
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="w-10 h-10 bg-purple-600 hover:bg-purple-700 rounded-xl flex items-center justify-center transition-all duration-300 transform hover:scale-110 shadow-lg"
+                  className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 group"
+                  title={`Logged in as ${user?.username || user?.name || 'User'}`}
                 >
-                  <User className="w-5 h-5 text-white" />
+                  {user?.profileImg ? (
+                    <img
+                      src={user.profileImg}
+                      alt={user.username || user.name}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-purple-200 dark:border-purple-800 group-hover:border-purple-400 dark:group-hover:border-purple-600 transition-colors"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg group-hover:from-purple-700 group-hover:to-blue-700 transition-all duration-300 group-hover:shadow-xl">
+                      <User className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+                  <span className="hidden sm:block text-sm font-medium">
+                    {user?.username || user?.name || 'User'}
+                  </span>
                 </button>
 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-3 z-50">
+                    <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50 mb-2">
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                        {user?.username || user?.name}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {user?.email}
+                      </p>
+                    </div>
+
                     <button
                       onClick={() => setShowUserMenu(false)}
                       className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
@@ -184,14 +239,12 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
                     <hr className="my-2 border-gray-200/50 dark:border-gray-700/50 mx-4" />
 
                     <button
-                      onClick={() => {
-                        setShowUserMenu(false)
-                        setIsAuthenticated(false)
-                      }}
-                      className="flex items-center px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors rounded-xl mx-2 w-11/12 text-left"
+                      onClick={handleLogout}
+                      disabled={authLoading}
+                      className="flex items-center px-4 py-3 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors rounded-xl mx-2 w-11/12 text-left disabled:opacity-50"
                     >
                       <LogOut className="w-4 h-4 mr-3" />
-                      Logout
+                      {authLoading ? 'Logging out...' : 'Logout'}
                     </button>
                   </div>
                 )}
@@ -206,7 +259,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, isAuthentic
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         initialMode={authMode}
-        onAuthSuccess={() => setIsAuthenticated(true)}
+        onAuthSuccess={handleAuthSuccess}
       />
     </>
   )
