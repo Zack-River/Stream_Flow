@@ -1,8 +1,10 @@
+// Refactored HomePage.jsx with debounced search
 import { useEffect, useState } from "react"
 import { useOutletContext } from "react-router-dom"
 import { PuffLoader } from 'react-spinners'
 import SongCard from "../songCard/SongCard.jsx"
 import { ToastContainer, useToast } from "../common/Toast"
+import { useSearch } from "../../hooks/useDebounce"
 import {
   fetchSongsWithRetry,
   filterSongsByGenre,
@@ -15,7 +17,7 @@ import {
 import HeroSection from "./HeroSection.jsx"
 
 export default function HomePage() {
-  const { searchQuery, clearSearch } = useOutletContext()
+  const { searchQuery: externalSearchQuery, clearSearch: externalClearSearch } = useOutletContext()
   const [songs, setSongs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -23,14 +25,47 @@ export default function HomePage() {
   const [retryCount, setRetryCount] = useState(0)
   const [apiStatus, setApiStatus] = useState(null)
 
-  // Toast hook
+  // Enhanced Toast hook with FIFO queue (max 4 toasts)
   const {
     toasts,
     removeToast,
     showErrorToast,
     showWarningToast,
-    showInfoToast
-  } = useToast()
+    showInfoToast,
+    showUniqueToast
+  } = useToast(4)
+
+  // Debounced search hook
+  const {
+    searchQuery,
+    searchResults,
+    isSearching,
+    handleSearchChange,
+    clearSearch,
+    setSearchQuery
+  } = useSearch(
+    searchApiSongs, // search function
+    500, // 500ms debounce delay
+    (message, type, duration) => showUniqueToast(message, type, duration) // toast function
+  )
+
+  const truncate = (text, maxLength = 50) => {
+    if (!text || typeof text !== 'string') return text
+    const trimmed = text.trim()
+    return trimmed.length > maxLength ? `${trimmed.slice(0, maxLength - 1)}…` : trimmed
+  }
+
+  // Sync external search query with internal search
+  useEffect(() => {
+    if (externalSearchQuery !== searchQuery) {
+      if (externalSearchQuery === "") {
+        clearSearch()
+      } else {
+        setSearchQuery(externalSearchQuery)
+        handleSearchChange(externalSearchQuery)
+      }
+    }
+  }, [externalSearchQuery, searchQuery, handleSearchChange, clearSearch, setSearchQuery])
 
   // Get all songs from API with retry logic
   const getAllSongs = async (showLoadingSpinner = true) => {
@@ -79,43 +114,11 @@ export default function HomePage() {
     }
   }
 
-  // Handle search from navbar
-  const handleSearch = async (query) => {
-    if (!query.trim()) {
-      return
-    }
-
-    try {
-      setLoading(true)
-
-      const searchResults = await searchApiSongs(query, 100)
-      setSongs(searchResults)
-      
-      if (searchResults.length === 0) {
-        showWarningToast(`No results found for "${query}"`, 3000)
-      }
-    } catch (err) {
-      console.error('Search error:', err)
-      setError('Search failed. Please try again.')
-      showErrorToast('Search failed. Please try again.', 4000)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Effect to handle search from navbar
-  useEffect(() => {
-    if (searchQuery && searchQuery.trim()) {
-      handleSearch(searchQuery)
-    } else if (searchQuery === "" && songs.length === 0) {
-      getAllSongs()
-    }
-  }, [searchQuery])
-
   // Clear search and reload all songs
   const handleClearSearch = () => {
-    if (clearSearch) {
-      clearSearch()
+    clearSearch()
+    if (externalClearSearch) {
+      externalClearSearch()
     }
     getAllSongs()
     showInfoToast('Showing all songs', 2000)
@@ -154,11 +157,15 @@ export default function HomePage() {
     }
   }, [])
 
+  // Determine which songs to display
+  const displaySongs = searchQuery ? searchResults : songs
+  const truncatedSearchQuery = truncate(searchQuery, 50)
+  
   // Get unique genres for filter
-  const availableGenres = getUniqueGenres(songs)
+  const availableGenres = getUniqueGenres(displaySongs)
 
   // Filter songs by selected genre
-  const filteredSongs = filterSongsByGenre(songs, selectedGenre)
+  const filteredSongs = filterSongsByGenre(displaySongs, selectedGenre)
 
   // Get featured songs (first 8 songs)
   const featuredSongs = getFeaturedSongs(filteredSongs, 8)
@@ -168,7 +175,7 @@ export default function HomePage() {
   const trendingSongs = getTrendingSongs(remainingSongs, 6)
 
   // Loading state
-  if (loading && songs.length === 0) {
+  if ((loading && songs.length === 0) || (isSearching && searchResults.length === 0 && searchQuery)) {
     return (
       <>
         <div className="space-y-8">
@@ -183,12 +190,12 @@ export default function HomePage() {
             />
             <div className="text-center">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
-                Loading your music...
+                {isSearching ? 'Searching...' : 'Loading your music...'}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Fetching songs from our collection
+                {isSearching ? `Searching for "${truncatedSearchQuery}"` : 'Fetching songs from our collection'}
               </p>
-              {retryCount > 0 && (
+              {retryCount > 0 && !isSearching && (
                 <p className="text-sm text-gray-500 mt-2">
                   Retry attempt {retryCount}...
                 </p>
@@ -204,7 +211,7 @@ export default function HomePage() {
   }
 
   // Error state
-  if (error && songs.length === 0) {
+  if (error && songs.length === 0 && !searchQuery) {
     return (
       <>
         <div className="space-y-8">
@@ -276,7 +283,7 @@ export default function HomePage() {
         {/* Songs Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-md">
-            <h3 className="text-2xl font-bold text-purple-600">{songs.length}</h3>
+            <h3 className="text-2xl font-bold text-purple-600">{displaySongs.length}</h3>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
               {searchQuery ? 'Search Results' : 'Total Songs'}
             </p>
@@ -300,7 +307,8 @@ export default function HomePage() {
           <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">
-                Search Results for "{searchQuery}"
+                Search Results for "{truncatedSearchQuery}"
+                {isSearching && <span className="ml-2 text-sm text-gray-500">(searching...)</span>}
               </h2>
               <span className="text-sm text-gray-500 dark:text-gray-400">
                 {filteredSongs.length} result{filteredSongs.length !== 1 ? 's' : ''}
@@ -312,14 +320,14 @@ export default function HomePage() {
                   <SongCard key={song.id} song={song} />
                 ))}
               </div>
-            ) : (
+            ) : !isSearching ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <div className="text-gray-400 text-6xl mb-4">🔍</div>
                 <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
                   No Results Found
                 </h2>
                 <p className="text-gray-600 dark:text-gray-400 text-center max-w-md mb-4">
-                  No songs found for "{searchQuery}". Try different keywords or check your spelling.
+                  No songs found for "{truncatedSearchQuery}". Try different keywords or check your spelling.
                 </p>
                 <button
                   onClick={handleClearSearch}
@@ -328,7 +336,7 @@ export default function HomePage() {
                   Browse All Songs
                 </button>
               </div>
-            )}
+            ) : null}
           </div>
         )}
 
@@ -419,7 +427,7 @@ export default function HomePage() {
         )}
 
         {/* Loading Overlay for Background Operations */}
-        {loading && songs.length > 0 && (
+        {(loading && songs.length > 0) || (isSearching && searchResults.length > 0) && (
           <div className="fixed top-14 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center space-x-3">
               <PuffLoader
@@ -428,7 +436,7 @@ export default function HomePage() {
                 loading={true}
               />
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {searchQuery ? 'Searching...' : 'Refreshing...'}
+                {isSearching ? 'Searching...' : 'Refreshing...'}
               </span>
             </div>
           </div>

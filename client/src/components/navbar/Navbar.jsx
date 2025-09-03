@@ -1,8 +1,10 @@
+// Refactored Navbar.jsx with debounced search
 import { useState, useRef, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTheme } from "../../context/ThemeContext"
 import { useAuth } from "../../context/AuthContext"
 import { ToastContainer, useToast } from "../common/Toast"
+import { useDebouncedCallback } from "../../hooks/useDebounce"
 import { PuffLoader } from 'react-spinners'
 import logoImage from "../../assets/logo.png"
 import { Search, Home, Menu, Sun, Moon, User, Settings, LogOut } from "lucide-react"
@@ -15,11 +17,12 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || "")
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState("signin")
+  const [isSearching, setIsSearching] = useState(false)
   const location = useLocation()
 
   const userMenuRef = useRef(null)
 
-  // Toast hook
+  // Enhanced Toast hook with FIFO queue (max 4 toasts)
   const {
     toasts,
     removeToast,
@@ -27,12 +30,24 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
     showWelcomeToast,
     showRegistrationToast,
     showAuthToast
-  } = useToast()
+  } = useToast(4)
 
   // Check if current page is home
   const isHome = location.pathname === '/'
 
-  // Update local search query when prop changes
+  // Debounced search callback - only triggers after 500ms of no typing
+  const [debouncedSearch] = useDebouncedCallback(
+    (query) => {
+      setIsSearching(false)
+      if (onSearch) {
+        onSearch(query)
+      }
+    },
+    500,
+    [onSearch]
+  )
+
+  // Update local search query when prop changes (external updates)
   useEffect(() => {
     setLocalSearchQuery(searchQuery || "")
   }, [searchQuery])
@@ -83,16 +98,26 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
     }
   }
 
+  // Handle search input changes with debouncing
   const handleSearchInputChange = (e) => {
     const value = e.target.value
     setLocalSearchQuery(value)
-    if (onSearch) {
-      onSearch(value)
+    
+    if (value.trim()) {
+      setIsSearching(true)
+      debouncedSearch(value)
+    } else {
+      // Immediate clear when search is empty
+      setIsSearching(false)
+      if (onSearch) {
+        onSearch("")
+      }
     }
   }
 
   const clearSearch = () => {
     setLocalSearchQuery("")
+    setIsSearching(false)
     if (onSearch) {
       onSearch("")
     }
@@ -146,14 +171,29 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
             </Link>
 
             <div className="relative flex-1 max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-black dark:text-gray-400 w-5 h-5" />
+              {/* Search Icon with loading state */}
+              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+                {isSearching ? (
+                  <PuffLoader
+                    color="#7C3AED"
+                    size={16}
+                    loading={true}
+                  />
+                ) : (
+                  <Search className="text-black dark:text-gray-400 w-5 h-5" />
+                )}
+              </div>
+              
               <input
                 type="text"
-                placeholder="Search songs, artists ..."
+                placeholder={isSearching ? "Searching..." : "Search songs, artists ..."}
                 value={localSearchQuery}
                 onChange={handleSearchInputChange}
-                className="w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300"
+                className={`w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300 ${
+                  isSearching ? 'bg-purple-50 dark:bg-purple-900/10' : ''
+                }`}
               />
+              
               {localSearchQuery && (
                 <button
                   onClick={clearSearch}
@@ -214,8 +254,6 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                   className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 group"
                   title={`Logged in as ${user?.username || user?.name || 'User'}`}
                 >
-                  {console.log(user.profileImg)}
-                  
                   {user?.profileImg != "No Profile Picture" ? (
                     <img
                       src={user.profileImg}
