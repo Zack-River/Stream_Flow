@@ -1,17 +1,33 @@
 import { useState, useRef, useEffect } from "react"
 import { Play, Pause, Heart, MoreHorizontal, Trash2, Music, Edit2 } from "lucide-react"
 import { useMusic } from "../../context/MusicContext"
+import { useAuth } from "../../context/AuthContext"
+import { useAuthGuard } from "../../utils/authGuardUtils"
+import { showErrorToast } from "../../utils/toastUtils"
 
-export default function SongCard({ song, isEditMode = false, onEditClick = null }) {
+export default function SongCard({
+  song,
+  isEditMode = false,
+  onEditClick = null,
+  onAuthRequired = null // Callback to open auth modal
+}) {
   const { state, dispatch } = useMusic()
+  const { isAuthenticated } = useAuth()
   const [isHovered, setIsHovered] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const menuRef = useRef(null)
-  
+
+  // Create authentication guards
+  const {
+    guardPlayAction,
+    guardFavoriteAction,
+    createGuardedAction
+  } = useAuthGuard(isAuthenticated, onAuthRequired)
+
   // Handle both API songs (id) and user uploads (id or _id)
   const songId = song.id || song._id
-  
+
   const isCurrentSong = state.currentSong?.id === songId
   const isPlaying = isCurrentSong && state.isPlaying
   const isFavorite = state.favorites.some((fav) => (fav.id || fav._id) === songId)
@@ -42,9 +58,10 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
     }
   }, [showMenu])
 
-  const handlePlayPause = (e) => {
-    e.stopPropagation()
-    
+  /**
+   * Core play song function (unguarded)
+   */
+  const playSongCore = () => {
     // Normalize song data for the player
     const normalizedSong = {
       id: songId,
@@ -58,7 +75,7 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
       genre: song.genre,
       category: song.category
     }
-    
+
     if (isCurrentSong) {
       dispatch({ type: "TOGGLE_PLAY" })
     } else {
@@ -67,9 +84,10 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
     }
   }
 
-  const handleFavorite = (e) => {
-    e.stopPropagation()
-    
+  /**
+   * Core favorite function (unguarded)
+   */
+  const toggleFavoriteCore = () => {
     // Normalize song data for favorites
     const normalizedSong = {
       id: songId,
@@ -83,7 +101,7 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
       genre: song.genre,
       category: song.category
     }
-    
+
     if (isFavorite) {
       dispatch({ type: "REMOVE_FROM_FAVORITES", payload: songId })
     } else {
@@ -91,19 +109,88 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
     }
   }
 
+  /**
+   * Guarded play action with authentication check
+   */
+  const guardedPlaySong = guardPlayAction(playSongCore, {
+    errorMessage: 'You must be signed in to play music.',
+    authMode: 'signin'
+  })
+
+  /**
+   * Guarded favorite action with authentication check
+   */
+  const guardedToggleFavorite = guardFavoriteAction(toggleFavoriteCore, {
+    errorMessage: 'You must be signed in to add favorites.',
+    authMode: 'signin'
+  })
+
+  /**
+   * Handle play/pause with authentication guard
+   */
+  const handlePlayPause = (e) => {
+    e.stopPropagation()
+    
+    // Call the guarded action - it will handle auth check and modal opening
+    guardedPlaySong()
+  }
+
+  /**
+   * Handle favorite toggle with authentication guard
+   */
+  const handleFavorite = (e) => {
+    e.stopPropagation()
+    
+    // Call the guarded action - it will handle auth check and modal opening
+    guardedToggleFavorite()
+  }
+
   const handleMenuToggle = (e) => {
     e.stopPropagation()
     setShowMenu(!showMenu)
   }
 
+  /**
+   * Guarded menu action handler
+   */
   const handleMenuOption = (action, e) => {
     e.stopPropagation()
     setShowMenu(false)
 
-    if (action === "delete") {
-      setShowDeleteConfirm(true)
+    // Create guarded actions for menu options
+    const guardedQueueAction = createGuardedAction(() => {
+      // TODO: Implement queue functionality
+      console.log('Add to queue:', song.title)
+    }, {
+      errorMessage: 'You must be signed in to add songs to queue.',
+      authMode: 'signin'
+    })
+
+    const guardedPlaylistAction = createGuardedAction(() => {
+      // TODO: Implement playlist functionality
+      console.log('Add to playlist:', song.title)
+    }, {
+      errorMessage: 'You must be signed in to manage playlists.',
+      authMode: 'signin'
+    })
+
+    // Handle different menu actions
+    switch (action) {
+      case "queue":
+        guardedQueueAction()
+        break
+      case "playlist":
+        guardedPlaylistAction()
+        break
+      case "delete":
+        // Delete action only available for authenticated users with uploaded songs
+        if (isAuthenticated && isUploaded) {
+          setShowDeleteConfirm(true)
+        }
+        break
+      default:
+        break
     }
-    // TODO: Implement other menu actions like "Add to Queue", "Add to Playlist"
   }
 
   const handleEditClick = (e) => {
@@ -187,32 +274,39 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
           {/* Normal Play/Pause Overlay - Only show when not in edit mode */}
           {!isEditMode && (
             <div
-              className={`absolute inset-0 bg-black bg-opacity-40 rounded-md sm:rounded-lg flex items-center justify-center transition-opacity duration-200 ${
-                isHovered || isPlaying ? "opacity-100" : "opacity-0"
-              }`}
+              className={`absolute inset-0 bg-black bg-opacity-40 rounded-md sm:rounded-lg flex items-center justify-center transition-opacity duration-200 ${isHovered || isPlaying ? "opacity-100" : "opacity-0"
+                }`}
             >
               <button
                 onClick={handlePlayPause}
-                className="w-8 h-8 sm:w-10 sm:h-10 bg-white rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg"
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg ${isAuthenticated
+                    ? "bg-white text-gray-900"
+                    : "bg-purple-500 text-white hover:bg-purple-600"
+                  }`}
+                title={isAuthenticated ? (isPlaying ? "Pause" : "Play") : "Sign in to play music"}
               >
-                {isPlaying ? (
-                  <Pause className="w-3 h-3 sm:w-4 sm:h-4 text-gray-900" />
+                {isAuthenticated && isPlaying ? (
+                  <Pause className="w-3 h-3 sm:w-4 sm:h-4" />
                 ) : (
-                  <Play className="w-3 h-3 sm:w-4 sm:h-4 text-gray-900 ml-0.5" />
+                  <Play className="w-3 h-3 sm:w-4 sm:h-4 ml-0.5" />
                 )}
               </button>
             </div>
           )}
 
-          {/* Heart button - Hide in edit mode */}
+          {/* Heart button - Show visual state for auth status */}
           {!isEditMode && (
             <button
               onClick={handleFavorite}
-              className={`absolute top-1 sm:top-2 right-1 sm:right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all ${
-                isFavorite ? "bg-red-500 text-white" : "bg-black bg-opacity-50 text-white hover:bg-opacity-70"
-              }`}
+              className={`absolute top-1 sm:top-2 right-1 sm:right-2 w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center transition-all ${!isAuthenticated
+                  ? "bg-gray-500 bg-opacity-70 text-gray-300 hover:bg-purple-500 hover:text-white hover:bg-opacity-90"
+                  : isFavorite
+                    ? "bg-red-500 text-white hover:bg-red-600"
+                    : "bg-black bg-opacity-50 text-white hover:bg-opacity-70"
+                }`}
+              title={!isAuthenticated ? "Sign in to add to favorites" : (isFavorite ? "Remove from favorites" : "Add to favorites")}
             >
-              <Heart className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${isFavorite ? "fill-current" : ""}`} />
+              <Heart className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${isFavorite && isAuthenticated ? "fill-current" : ""}`} />
             </button>
           )}
         </div>
@@ -228,41 +322,66 @@ export default function SongCard({ song, isEditMode = false, onEditClick = null 
             <span className="text-gray-500 dark:text-gray-500 text-[9px] sm:text-xs font-medium bg-gray-100 dark:bg-gray-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
               {displayDuration}
             </span>
-            
-            {/* Menu button - Hide in edit mode */}
+
+            {/* Menu button - Show for everyone but provide visual feedback for auth status */}
             {!isEditMode && (
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={handleMenuToggle}
-                  className="p-0.5 sm:p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  className={`p-0.5 sm:p-1 rounded-full transition-colors ${isAuthenticated
+                      ? "hover:bg-gray-100 dark:hover:bg-gray-700"
+                      : "hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400"
+                    }`}
+                  title={isAuthenticated ? "More options" : "Sign in for more options"}
                 >
                   <MoreHorizontal className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
 
                 {showMenu && (
-                  <div className="absolute right-0 mt-1 w-28 sm:w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-20">
-                    <button
-                      onClick={(e) => handleMenuOption("queue", e)}
-                      className="w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Add to Queue
-                    </button>
-                    <button
-                      onClick={(e) => handleMenuOption("playlist", e)}
-                      className="w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      Add to Playlist
-                    </button>
-                    {isUploaded && (
-                      <button
-                        onClick={(e) => handleMenuOption("delete", e)}
-                        className="w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors"
-                      >
-                        <div className="flex items-center space-x-1.5 sm:space-x-2">
-                          <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                          <span>Delete</span>
-                        </div>
-                      </button>
+                  <div className="absolute right-0 mt-1 w-32 sm:w-36 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-20">
+                    {isAuthenticated ? (
+                      <>
+                        <button
+                          onClick={(e) => handleMenuOption("queue", e)}
+                          className="w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          Add to Queue
+                        </button>
+                        <button
+                          onClick={(e) => handleMenuOption("playlist", e)}
+                          className="w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          Add to Playlist
+                        </button>
+                        {isUploaded && (
+                          <button
+                            onClick={(e) => handleMenuOption("delete", e)}
+                            className="w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors"
+                          >
+                            <div className="flex items-center space-x-1.5 sm:space-x-2">
+                              <Trash2 className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
+                              <span>Delete</span>
+                            </div>
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <div className="px-2 sm:px-3 py-2">
+                        <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 text-center mb-2">
+                          Sign in to access menu options
+                        </p>
+                        <button
+                          onClick={() => {
+                            setShowMenu(false)
+                            if (onAuthRequired) {
+                              onAuthRequired('signin')
+                            }
+                          }}
+                          className="w-full text-center px-2 py-1 text-[10px] sm:text-xs bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
+                        >
+                          Sign In
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}

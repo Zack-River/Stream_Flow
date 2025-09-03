@@ -1,10 +1,10 @@
-// Refactored HomePage.jsx with debounced search
 import { useEffect, useState } from "react"
 import { useOutletContext } from "react-router-dom"
 import { PuffLoader } from 'react-spinners'
 import SongCard from "../songCard/SongCard.jsx"
 import { ToastContainer, useToast } from "../common/Toast"
 import { useSearch } from "../../hooks/useDebounce"
+import { useAuth } from "../../context/AuthContext"
 import {
   fetchSongsWithRetry,
   filterSongsByGenre,
@@ -15,15 +15,21 @@ import {
   getApiStatus
 } from "../../utils/apiUtils.js"
 import HeroSection from "./HeroSection.jsx"
+import AuthenticationModals from "../authentication/AuthenticationModals.jsx"
 
 export default function HomePage() {
   const { searchQuery: externalSearchQuery, clearSearch: externalClearSearch } = useOutletContext()
+  const { isAuthenticated, user } = useAuth()
   const [songs, setSongs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedGenre, setSelectedGenre] = useState('all')
   const [retryCount, setRetryCount] = useState(0)
   const [apiStatus, setApiStatus] = useState(null)
+
+  // Authentication modal state
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authMode, setAuthMode] = useState("signin")
 
   // Enhanced Toast hook with FIFO queue (max 4 toasts)
   const {
@@ -32,7 +38,10 @@ export default function HomePage() {
     showErrorToast,
     showWarningToast,
     showInfoToast,
-    showUniqueToast
+    showUniqueToast,
+    showWelcomeToast,
+    showRegistrationToast,
+    showAuthToast
   } = useToast(4)
 
   // Debounced search hook
@@ -53,6 +62,23 @@ export default function HomePage() {
     if (!text || typeof text !== 'string') return text
     const trimmed = text.trim()
     return trimmed.length > maxLength ? `${trimmed.slice(0, maxLength - 1)}…` : trimmed
+  }
+
+  // Authentication handlers
+  const handleAuthRequired = (mode = 'signin') => {
+    setAuthMode(mode)
+    setShowAuthModal(true)
+  }
+
+  const handleAuthSuccess = (userData, isRegistration = false) => {
+    console.log('Authentication successful from HomePage:', userData)
+    
+    // Show appropriate welcome toast
+    if (isRegistration) {
+      showRegistrationToast(userData?.username || userData?.name || 'User')
+    } else {
+      showWelcomeToast(userData?.username || userData?.name || 'User')
+    }
   }
 
   // Sync external search query with internal search
@@ -203,6 +229,15 @@ export default function HomePage() {
             </div>
           </div>
         </div>
+
+        {/* Authentication Modal */}
+        <AuthenticationModals
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          initialMode={authMode}
+          onAuthSuccess={handleAuthSuccess}
+          showAuthToast={showAuthToast}
+        />
         
         {/* Toast Container */}
         <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
@@ -248,6 +283,15 @@ export default function HomePage() {
             )}
           </div>
         </div>
+
+        {/* Authentication Modal */}
+        <AuthenticationModals
+          isOpen={showAuthModal}
+          onClose={() => setShowAuthModal(false)}
+          initialMode={authMode}
+          onAuthSuccess={handleAuthSuccess}
+          showAuthToast={showAuthToast}
+        />
         
         {/* Toast Container */}
         <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
@@ -317,7 +361,11 @@ export default function HomePage() {
             {filteredSongs.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
                 {filteredSongs.map((song) => (
-                  <SongCard key={song.id} song={song} />
+                  <SongCard 
+                    key={song.id} 
+                    song={song} 
+                    onAuthRequired={handleAuthRequired}
+                  />
                 ))}
               </div>
             ) : !isSearching ? (
@@ -353,7 +401,11 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {featuredSongs.map((song) => (
-                <SongCard key={song.id} song={song} />
+                <SongCard 
+                  key={song.id} 
+                  song={song} 
+                  onAuthRequired={handleAuthRequired}
+                />
               ))}
             </div>
           </div>
@@ -372,7 +424,11 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {trendingSongs.map((song) => (
-                <SongCard key={`trending-${song.id}`} song={song} />
+                <SongCard 
+                  key={`trending-${song.id}`} 
+                  song={song} 
+                  onAuthRequired={handleAuthRequired}
+                />
               ))}
             </div>
           </div>
@@ -384,7 +440,11 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold mb-6">All Songs</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {filteredSongs.slice(featuredSongs.length + trendingSongs.length).map((song) => (
-                <SongCard key={`all-${song.id}`} song={song} />
+                <SongCard 
+                  key={`all-${song.id}`} 
+                  song={song} 
+                  onAuthRequired={handleAuthRequired}
+                />
               ))}
             </div>
           </div>
@@ -442,6 +502,15 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      {/* Authentication Modal */}
+      <AuthenticationModals
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialMode={authMode}
+        onAuthSuccess={handleAuthSuccess}
+        showAuthToast={showAuthToast}
+      />
 
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
