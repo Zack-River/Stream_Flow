@@ -152,7 +152,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                 placeholder="Search songs, artists ..."
                 value={localSearchQuery}
                 onChange={handleSearchInputChange}
-                className="w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-none focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300"
+                className="w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300"
               />
               {localSearchQuery && (
                 <button
@@ -200,7 +200,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                     </button>
                     <button
                       onClick={handleSignInClick}
-                      className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
+                      className="px-4 py-2 bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 text-white rounded-xl hover:from-purple-700 hover:via-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg font-medium"
                     >
                       Sign In
                     </button>
@@ -214,14 +214,16 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                   className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 group"
                   title={`Logged in as ${user?.username || user?.name || 'User'}`}
                 >
-                  {user?.profileImg ? (
+                  {console.log(user.profileImg)}
+                  
+                  {user?.profileImg != "No Profile Picture" ? (
                     <img
                       src={user.profileImg}
                       alt={user.username || user.name}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-purple-200 dark:border-purple-800 group-hover:border-purple-400 dark:group-hover:border-purple-600 transition-colors"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-purple-400 dark:border-purple-600 group-hover:border-purple-600 dark:group-hover:border-purple-800 transition-colors"
                     />
                   ) : (
-                    <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg group-hover:from-purple-700 group-hover:to-blue-700 transition-all duration-300 group-hover:shadow-xl">
+                    <div className="w-8 h-8 bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg group-hover:from-purple-700 group-hover:via-purple-700 group-hover:to-blue-700 transition-all duration-300 group-hover:shadow-xl">
                       <User className="w-4 h-4 text-white" />
                     </div>
                   )}

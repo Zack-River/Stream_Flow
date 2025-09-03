@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { Formik, Field } from "formik"
 import { useAuth } from "../../context/AuthContext"
-import FormInput from "../FormInput/FormInput"
+import FormInput from "../common/FormInput"
 import * as Yup from "yup"
 import { X, Mail, Lock, User } from "lucide-react"
 
@@ -208,7 +208,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200/50 dark:border-gray-700/50">
-          <h2 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <h2 className="text-2xl font-bold bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
             {mode === "signin" ? "Welcome Back" : "Join StreamFlow"}
           </h2>
           <button
@@ -267,7 +267,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
                       type="button"
                       onClick={handleSubmit}
                       disabled={isSubmitting || isLoading}
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:via-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       {isSubmitting || isLoading ? "Signing In..." : "Sign In"}
                     </button>
@@ -363,7 +363,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
                       type="button"
                       onClick={handleSubmit}
                       disabled={isSubmitting || isLoading}
-                      className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:via-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       {isSubmitting || isLoading ? "Creating Account..." : "Create Account"}
                     </button>

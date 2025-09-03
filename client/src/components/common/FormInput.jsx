@@ -25,11 +25,12 @@ export default function FormInput({
                     {...props}
                     type={showPasswordToggle ? (showPassword ? "text" : "password") : type}
                     placeholder={placeholder}
-                    className={`w-full pl-10 ${showPasswordToggle ? 'pr-12' : 'pr-4'} py-3 border-gray-400 dark:border-gray-700/80 bg-gray-100/80 dark:bg-gray-700/80 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:bg-white dark:focus:bg-gray-600 ${hasError
-                            ? "border-red-500"
-                            : "border-transparent focus:border-purple-500"
+                    className={`w-full pl-10 ${showPasswordToggle ? 'pr-12' : 'pr-4'} py-3 border-gray-500/25 dark:border-gray-600  bg-gray-100/80 dark:bg-gray-700/80 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:bg-white dark:focus:bg-gray-600 ${hasError
+                        ? "focus:border-red-500 dark:focus:border-red-500 " 
+                        : "border-transparent focus:border-purple-500 dark:focus:border-purple-500"
                         }`}
                 />
+                
                 {showPasswordToggle && (
                     <button
                         type="button"
