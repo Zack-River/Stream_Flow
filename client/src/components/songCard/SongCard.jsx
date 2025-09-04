@@ -58,6 +58,60 @@ export default function SongCard({
     }
   }, [showMenu])
 
+  // Helper function to parse and format multiple artists
+  const formatArtists = (artistString) => {
+    if (!artistString) return "Unknown Artist"
+    
+    // Clean up the string first
+    let cleanedString = artistString
+      .replace(/\\"/g, '"')  // Replace escaped quotes
+      .replace(/^"/, '')     // Remove leading quote
+      .replace(/"$/, '')     // Remove trailing quote
+    
+    // Try to split by quote-comma patterns first
+    let artists = []
+    
+    // Check for the specific format like: David Guetta","Bebe Rexha
+    if (cleanedString.includes('","')) {
+      artists = cleanedString.split('","')
+    }
+    // Check for escaped quote format
+    else if (cleanedString.includes('\",\"')) {
+      artists = cleanedString.split('\",\"')
+    }
+    // Fall back to other separators
+    else {
+      artists = [cleanedString]
+      const separators = [',', ' & ', ' and ', ' ft. ', ' feat. ', ' featuring ', '+', ' x ']
+      
+      for (const separator of separators) {
+        if (artists.length === 1 && artists[0].includes(separator)) {
+          artists = artists[0].split(separator)
+          break
+        }
+      }
+    }
+    
+    // Clean up each artist name
+    artists = artists
+      .map(artist => artist.trim())
+      .map(artist => artist.replace(/^["']+|["']+$/g, '')) // Remove quotes
+      .filter(artist => artist.length > 0)
+      .filter(artist => !['ft', 'feat', 'featuring', 'and'].includes(artist.toLowerCase()))
+    
+    // Remove duplicates
+    artists = [...new Set(artists)]
+    
+    // Format the display
+    if (artists.length === 0) return "Unknown Artist"
+    if (artists.length === 1) return artists[0]
+    if (artists.length === 2) return `${artists[0]} & ${artists[1]}`
+    if (artists.length <= 4) return artists.join(', ')
+    
+    // For more than 4 artists
+    return `${artists.slice(0, 3).join(', ')} & ${artists.length - 3} more`
+  }
+
   /**
    * Core play song function (unguarded)
    */
@@ -66,7 +120,7 @@ export default function SongCard({
     const normalizedSong = {
       id: songId,
       title: song.title,
-      artist: song.artist || song.singer, // Handle both formats
+      artist: song.artist || song.singer, // Keep original format for internal use
       album: song.album,
       duration: song.duration,
       cover: song.cover || song.coverImageUrl,
@@ -223,7 +277,8 @@ export default function SongCard({
 
   // Get display values with fallbacks
   const displayTitle = song.title || "Unknown Title"
-  const displayArtist = song.artist || song.singer || "Unknown Artist"
+  const rawArtist = song.artist || song.singer || "Unknown Artist"
+  const displayArtist = formatArtists(rawArtist)
   const displayCover = song.cover || song.coverImageUrl || "https://placehold.co/200x200/EFEFEF/AAAAAA?text=Song+Cover"
   const displayDuration = song.duration || "0:00"
   const displayGenre = song.genre
@@ -315,7 +370,10 @@ export default function SongCard({
           <h3 className="font-semibold text-xs sm:text-sm truncate" title={displayTitle}>
             {displayTitle}
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs truncate" title={displayArtist}>
+          <p 
+            className="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs truncate" 
+            title={rawArtist} // Show full original artist string on hover
+          >
             {displayArtist}
           </p>
           <div className="flex items-center justify-between">
