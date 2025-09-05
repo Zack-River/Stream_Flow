@@ -425,11 +425,10 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
   const displayTitle = currentSong.title || "Unknown Title"
   const displayArtist = currentSong.artist || currentSong.singer || "Unknown Artist"
   const displayCover = currentSong.cover || currentSong.coverImageUrl || "https://placehold.co/48x48/EFEFEF/AAAAAA?text=Cover"
-
-  return (
+return (
     <>
-      {/* MOBILE-FIRST RESPONSIVE DESIGN: Reduced padding from px-6 py-2 to px-3 py-2 on mobile, increased on larger screens */}
-      <div className="bg-white/95 dark:bg-gray-800/95 border-t border-gray-200/50 dark:border-gray-700/50 px-3 py-2 sm:px-4 lg:px-6 backdrop-blur-lg shadow-2xl">
+      {/* Audio Player Container - no longer needs positioning classes since parent handles it */}
+      <div className="bg-white/95 dark:bg-gray-800/95 border-t border-gray-200/50 dark:border-gray-700/50 px-3 py-2 sm:px-4 lg:px-6 backdrop-blur-lg shadow-2xl w-full">
         <audio
           key={currentSongId}
           ref={audioRef}
@@ -437,10 +436,10 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
           preload="auto"
         />
 
-        {/* MOBILE-FIRST: Stack vertically on mobile, horizontal on larger screens */}
+        {/* Rest of the audio player content remains the same */}
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
           
-          {/* MOBILE: Song Info + Heart moved to top row with reduced spacing */}
+          {/* Song Info + Heart */}
           <div className="flex items-center justify-between sm:justify-start sm:space-x-3 sm:w-50 sm:min-w-0">
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
               <div className="relative flex-shrink-0">
@@ -462,7 +461,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
               </div>
             </div>
             
-            {/* MOBILE: Heart button moved to right of song info */}
+            {/* Heart button */}
             <button
               onClick={handleFavorite}
               className={`p-2 rounded-full transition-all duration-200 flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${isFavorite
@@ -474,9 +473,9 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
             </button>
           </div>
 
-          {/* MOBILE: Controls section - full width on mobile */}
+          {/* Controls section */}
           <div className="flex flex-col space-y-2 sm:space-y-1 flex-1 sm:max-w-md">
-            {/* MOBILE: Reduced spacing between control buttons and smaller icons on mobile */}
+            {/* Control buttons */}
             <div className="flex items-center justify-center space-x-2 sm:space-x-4">
               <button className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
                 <Shuffle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -505,7 +504,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
               </button>
             </div>
 
-            {/* MOBILE: Seekbar with reduced spacing and smaller text */}
+            {/* Seekbar */}
             <div className="flex items-center space-x-2 sm:space-x-3 w-full">
               <span className="text-xs text-gray-500 font-mono w-8 sm:w-10 text-left flex-shrink-0">
                 {formatTime(currentTime)}
@@ -537,11 +536,11 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
             </div>
           </div>
 
-          {/* MOBILE: Right controls - hidden on extra small screens, shown as minimal on small+ */}
+          {/* Right controls */}
           <div className="hidden sm:flex items-center space-x-2 w-32 lg:w-40 justify-end">
             <div className="flex items-center space-x-1 lg:space-x-2 justify-end relative">
 
-              {/* Toggle Right Sidebar Button - hidden on mobile */}
+              {/* Toggle Right Sidebar Button */}
               <button
                 onClick={onToggleRightSidebar}
                 className="hidden lg:block p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
@@ -559,7 +558,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
                 {volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
 
-              {/* Volume Slider - Hidden on mobile and small screens */}
+              {/* Volume Slider */}
               {!isMobile && (
                 <div className="hidden md:flex h-6 items-center">
                   <input
@@ -584,9 +583,9 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
 
       </div>
 
-      {/* MOBILE: Volume Dropdown - positioned better for mobile screens */}
+      {/* Volume Dropdown - Update positioning for fixed player */}
       {showVolumeSlider && isMobile && (
-        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
           <div
             ref={modalRef}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 w-64"
