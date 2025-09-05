@@ -242,7 +242,7 @@ export default function Sidebar({ isOpen, onClose }) {
               <button
                 onClick={() => setShowUploadModal(true)}
                 className="w-full text-black dark:text-white bg-white dark:bg-gray-900 
-                font-medium py-3 px-4 sm:px-6 rounded-xl transition-all duration-200 transform shadow-md
+                font-medium py-3 px-4 sm:px-6 rounded-xl transition-all duration-200 transform
                 min-h-[48px] flex items-center justify-center space-x-3"
               >
                 <Upload className="w-5 h-5" />
