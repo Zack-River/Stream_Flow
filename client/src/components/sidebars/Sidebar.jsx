@@ -252,7 +252,7 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
 
           {/* MOBILE: Bottom spacing for better UX */}
-          <div className="bg-white dark:bg-gray-800 pb-20 lg:pb-10 flex-shrink-0">
+          <div className="bg-white/95 dark:bg-gray-800/95 pb-20 lg:pb-10 flex-shrink-0">
             {/* Intentional spacing for mobile audio player */}
           </div>
         </div>
