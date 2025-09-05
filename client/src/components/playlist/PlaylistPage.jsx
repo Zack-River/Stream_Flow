@@ -49,7 +49,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-[60] p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           handleClose()
@@ -57,9 +57,8 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
       }}
     >
       <div
-        className={`card rounded-2xl w-full max-w-md shadow-2xl mt-8 transform transition-all duration-300 ${
-          isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
-        }`}
+        className={`card rounded-2xl w-full max-w-md shadow-2xl mt-8 transform transition-all duration-300 ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+          }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -81,6 +80,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              maxLength={30}
               placeholder="Enter playlist name"
               className="input-primary w-full px-3 py-2 rounded-lg text-sm placeholder-gray-400"
               autoFocus
@@ -96,6 +96,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a description for your playlist"
+              maxLength={70}
               rows={3}
               className="input-primary w-full px-3 py-2 rounded-lg text-sm placeholder-gray-400 resize-none"
             />
@@ -129,7 +130,7 @@ const DeletePlaylistModal = ({ isOpen, onClose, playlist, onConfirmDelete }) => 
   if (!isOpen || !playlist) return null
 
   return (
-    <div 
+    <div
       className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -137,24 +138,24 @@ const DeletePlaylistModal = ({ isOpen, onClose, playlist, onConfirmDelete }) => 
         }
       }}
     >
-      <div 
+      <div
         className="card rounded-2xl p-4 sm:p-6 max-w-xs sm:max-w-sm w-full shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
           <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
         </div>
-        
+
         <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-center">Delete Playlist</h3>
-        
+
         <p className="text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 text-xs sm:text-sm text-center">
           Are you sure you want to delete <span className="font-semibold">"{playlist.name}"</span>?
         </p>
-        
+
         <p className="text-gray-500 dark:text-gray-500 mb-4 sm:mb-6 text-xs text-center">
           This action cannot be undone and will remove all {playlist.songs?.length || 0} songs from this playlist.
         </p>
-        
+
         <div className="flex space-x-2 sm:space-x-3">
           <button
             onClick={onClose}
@@ -180,10 +181,10 @@ export default function PlaylistPage() {
   const navigate = useNavigate()
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-  
+
   // Find the specific playlist by ID
   const playlist = state.playlists?.find(p => p.id === playlistId)
-  
+
   const handleUpdatePlaylist = (name, description) => {
     updatePlaylist(playlistId, { name, description })
   }
@@ -197,7 +198,7 @@ export default function PlaylistPage() {
     setShowDeleteModal(false)
     navigate("/")
   }
-  
+
   // Handle case where playlist is not found
   if (!playlist) {
     return (
@@ -232,7 +233,7 @@ export default function PlaylistPage() {
               <span>{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2 ml-4">
             <button
               onClick={() => setShowEditModal(true)}
@@ -252,7 +253,7 @@ export default function PlaylistPage() {
             </button>
           </div>
         </div>
-      
+
         {songs.length === 0 ? (
           <div className="text-center py-10">
             <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -264,7 +265,7 @@ export default function PlaylistPage() {
             <p className="text-gray-400 dark:text-gray-500 text-sm mb-8 max-w-md mx-auto">
               Start building your playlist by adding your favorite songs from your library.
             </p>
-            
+
           </div>
         ) : (
           <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4">
@@ -276,7 +277,7 @@ export default function PlaylistPage() {
       </div>
 
       {/* Edit Playlist Modal */}
-      <EditPlaylistModal 
+      <EditPlaylistModal
         isOpen={showEditModal}
         onClose={() => setShowEditModal(false)}
         playlist={playlist}

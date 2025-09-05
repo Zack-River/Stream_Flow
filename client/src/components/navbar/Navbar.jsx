@@ -475,7 +475,10 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
                     {/* Desktop User Menu */}
                     {showUserMenu && (
-                      <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-3 z-50">
+                      <div ref={userMenuRef}
+                        className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-3 z-50"
+                        style={{ top: '100%' }} // Ensure menu appears below the button
+                      >
                         <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50 mb-2">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">
                             {user?.username || user?.name}

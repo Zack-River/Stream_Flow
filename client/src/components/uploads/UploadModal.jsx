@@ -194,7 +194,7 @@ export default function UploadModal({ onClose, editSong = null }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-3 sm:p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-[60] p-3 sm:p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           handleClose()

@@ -47,7 +47,7 @@ const CreatePlaylistModal = ({ isOpen, onClose, onCreatePlaylist }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-50 p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-[60] p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           handleClose()
@@ -78,6 +78,7 @@ const CreatePlaylistModal = ({ isOpen, onClose, onCreatePlaylist }) => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              maxLength={30}
               placeholder="Enter playlist name"
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm dark:text-white placeholder-gray-400"
               autoFocus
@@ -93,6 +94,7 @@ const CreatePlaylistModal = ({ isOpen, onClose, onCreatePlaylist }) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add a description for your playlist"
+              maxLength={70}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm dark:text-white placeholder-gray-400 resize-none"
             />
@@ -252,7 +254,7 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
 
           {/* MOBILE: Bottom spacing for better UX */}
-          <div className="bg-white/95 dark:bg-gray-800/95 pb-20 lg:pb-10 flex-shrink-0">
+          <div className="bg-white/95 dark:bg-gray-800/95 pb-36 lg:pb-20 flex-shrink-0">
             {/* Intentional spacing for mobile audio player */}
           </div>
         </div>
