@@ -1,4 +1,3 @@
-// Refactored Navbar.jsx with mobile-first collapsible search
 import { useState, useRef, useEffect } from "react"
 import { Link, useLocation } from "react-router-dom"
 import { useTheme } from "../../context/ThemeContext"
@@ -23,6 +22,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
   const userMenuRef = useRef(null)
   const searchInputRef = useRef(null)
+  const userMenuButtonRef = useRef(null)
 
   // Enhanced Toast hook with FIFO queue (max 4 toasts)
   const {
@@ -63,8 +63,18 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+      // Check if click is outside both the menu button and the menu itself
+      if (userMenuRef.current &&
+        !userMenuRef.current.contains(event.target) &&
+        userMenuButtonRef.current &&
+        !userMenuButtonRef.current.contains(event.target)) {
         setShowUserMenu(false)
+      }
+
+      // Close mobile search if click is outside
+      if (isMobileSearchOpen &&
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target)) {
         closeMobileSearch()
       }
     }
@@ -115,7 +125,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
   const handleSearchInputChange = (e) => {
     const value = e.target.value
     setLocalSearchQuery(value)
-    
+
     if (value.trim()) {
       setIsSearching(true)
       debouncedSearch(value)
@@ -148,7 +158,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
   const handleAuthSuccess = (userData, isRegistration = false) => {
     console.log('Authentication successful:', userData)
-    
+
     // Show appropriate welcome toast
     if (isRegistration) {
       showRegistrationToast(userData?.username || userData?.name)
@@ -176,7 +186,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                   <Search className="text-black dark:text-gray-400 w-5 h-5" />
                 )}
               </div>
-              
+
               <input
                 ref={searchInputRef}
                 type="text"
@@ -184,11 +194,10 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                 value={localSearchQuery}
                 onChange={handleSearchInputChange}
                 on={closeMobileSearch}
-                className={`w-full pl-12 pr-12 py-2 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300 ${
-                  isSearching ? 'bg-purple-50 dark:bg-purple-900/10' : ''
-                }`}
+                className={`w-full pl-12 pr-12 py-2 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300 ${isSearching ? 'bg-purple-50 dark:bg-purple-900/10' : ''
+                  }`}
               />
-              
+
               <button
                 onClick={closeMobileSearch}
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10"
@@ -212,7 +221,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                 >
                   <Menu className="w-5 h-5" />
                 </button>
-                
+
                 <button
                   onClick={openMobileSearch}
                   className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -258,8 +267,9 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                     )}
                   </div>
                 ) : (
-                  <div className="relative" ref={userMenuRef}>
+                  <div className="relative">
                     <button
+                      ref={userMenuButtonRef}
                       onClick={() => setShowUserMenu(!showUserMenu)}
                       className="flex items-center p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 group"
                       title={`Logged in as ${user?.username || user?.name || 'User'}`}
@@ -279,7 +289,11 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
                     {/* Mobile User Menu */}
                     {showUserMenu && (
-                      <div className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-3 z-50">
+                      <div
+                        ref={userMenuRef}
+                        className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-3 z-50"
+                        style={{ top: '100%' }} // Ensure menu appears below the button
+                      >
                         <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50 mb-2">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">
                             {user?.username || user?.name}
@@ -335,6 +349,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
               </div>
             </div>
 
+
             {/* Desktop Layout: Logo - Home - Search - Theme - Auth */}
             <div className="hidden lg:flex items-center justify-between w-full space-x-5">
               {/* Left side: Logo */}
@@ -353,11 +368,10 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
               <div className="flex items-center space-x-4 flex-1 justify-center max-w-2xl">
                 <Link
                   to="/"
-                  className={`p-3 rounded-xl transition-all duration-300 transform hover:scale-110 ${
-                    isHome
-                      ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-                      : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
-                  }`}
+                  className={`p-3 rounded-xl transition-all duration-300 transform hover:scale-110 ${isHome
+                    ? "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                    }`}
                 >
                   <Home className="w-5 h-5" />
                 </Link>
@@ -375,17 +389,16 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                       <Search className="text-black dark:text-gray-400 w-5 h-5" />
                     )}
                   </div>
-                  
+
                   <input
                     type="text"
                     placeholder={isSearching ? "Searching..." : "Search songs, artists ..."}
                     value={localSearchQuery}
                     onChange={handleSearchInputChange}
-                    className={`w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300 ${
-                      isSearching ? 'bg-purple-50 dark:bg-purple-900/10' : ''
-                    }`}
+                    className={`w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300 ${isSearching ? 'bg-purple-50 dark:bg-purple-900/10' : ''
+                      }`}
                   />
-                  
+
                   {localSearchQuery && (
                     <button
                       onClick={clearSearch}
