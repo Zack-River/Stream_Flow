@@ -428,7 +428,8 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
 
   return (
     <>
-      <div className="bg-white/95 dark:bg-gray-800/95 border-t border-gray-200/50 dark:border-gray-700/50 px-6 py-2 backdrop-blur-lg shadow-2xl">
+      {/* MOBILE-FIRST RESPONSIVE DESIGN: Reduced padding from px-6 py-2 to px-3 py-2 on mobile, increased on larger screens */}
+      <div className="bg-white/95 dark:bg-gray-800/95 border-t border-gray-200/50 dark:border-gray-700/50 px-3 py-2 sm:px-4 lg:px-6 backdrop-blur-lg shadow-2xl">
         <audio
           key={currentSongId}
           ref={audioRef}
@@ -436,29 +437,35 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
           preload="auto"
         />
 
-        <div className="flex items-center justify-between">
-          {/* Song Info */}
-          <div className="flex items-center space-x-3 w-50 min-w-0">
-            <div className="relative flex-shrink-0">
-              <img
-                src={displayCover}
-                alt={displayTitle}
-                className="w-12 h-12 rounded-lg object-cover shadow-md"
-                onError={(e) => {
-                  e.target.src = "https://placehold.co/48x48/EFEFEF/AAAAAA?text=Cover"
-                }}
-              />
-              {currentSong.isUploaded && (
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
-              )}
+        {/* MOBILE-FIRST: Stack vertically on mobile, horizontal on larger screens */}
+        <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
+          
+          {/* MOBILE: Song Info + Heart moved to top row with reduced spacing */}
+          <div className="flex items-center justify-between sm:justify-start sm:space-x-3 sm:w-50 sm:min-w-0">
+            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
+              <div className="relative flex-shrink-0">
+                <img
+                  src={displayCover}
+                  alt={displayTitle}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shadow-md"
+                  onError={(e) => {
+                    e.target.src = "https://placehold.co/48x48/EFEFEF/AAAAAA?text=Cover"
+                  }}
+                />
+                {currentSong.isUploaded && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="font-semibold text-xs sm:text-sm truncate" title={displayTitle}>{displayTitle}</h4>
+                <p className="text-gray-600 dark:text-gray-400 text-xs truncate" title={displayArtist}>{displayArtist}</p>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <h4 className="font-semibold text-sm truncate" title={displayTitle}>{displayTitle}</h4>
-              <p className="text-gray-600 dark:text-gray-400 text-xs truncate" title={displayArtist}>{displayArtist}</p>
-            </div>
+            
+            {/* MOBILE: Heart button moved to right of song info */}
             <button
               onClick={handleFavorite}
-              className={`p-2 rounded-full transition-all duration-200 flex-shrink-0 ${isFavorite
+              className={`p-2 rounded-full transition-all duration-200 flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${isFavorite
                 ? "text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20"
                 : "text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
@@ -467,39 +474,40 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
             </button>
           </div>
 
-          {/* Controls */}
-          <div className="flex flex-col items-center space-y-1 flex-1 max-w-md">
-            <div className="flex items-center space-x-4">
-              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200">
-                <Shuffle className="w-4 h-4" />
+          {/* MOBILE: Controls section - full width on mobile */}
+          <div className="flex flex-col space-y-2 sm:space-y-1 flex-1 sm:max-w-md">
+            {/* MOBILE: Reduced spacing between control buttons and smaller icons on mobile */}
+            <div className="flex items-center justify-center space-x-2 sm:space-x-4">
+              <button className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <Shuffle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
-              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200">
-                <SkipBack className="w-5 h-5" />
+              <button className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={handlePlayPause}
                 className="w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-105 shadow-lg"
               >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+                {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />}
               </button>
-              <button className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200">
-                <SkipForward className="w-5 h-5" />
+              <button className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
+                <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button 
                 onClick={handleRepeat}
-                className={`p-2 rounded-full transition-all duration-200 ${
+                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center ${
                   repeatMode === 'one' 
                     ? "text-purple-500 hover:text-purple-600 bg-purple-50 dark:bg-purple-900/20" 
                     : "hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
               >
-                {repeatMode === 'one' ? <Repeat1 className="w-4 h-4" /> : <Repeat className="w-4 h-4" />}
+                {repeatMode === 'one' ? <Repeat1 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Repeat className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               </button>
             </div>
 
-            {/* Seekbar */}
-            <div className="flex items-center space-x-3 w-full">
-              <span className="text-xs text-gray-500 font-mono w-10 text-left flex-shrink-0">
+            {/* MOBILE: Seekbar with reduced spacing and smaller text */}
+            <div className="flex items-center space-x-2 sm:space-x-3 w-full">
+              <span className="text-xs text-gray-500 font-mono w-8 sm:w-10 text-left flex-shrink-0">
                 {formatTime(currentTime)}
               </span>
 
@@ -523,20 +531,20 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
                 />
               </div>
 
-              <span className="text-xs text-gray-500 font-mono w-10 text-right flex-shrink-0">
+              <span className="text-xs text-gray-500 font-mono w-8 sm:w-10 text-right flex-shrink-0">
                 {formatTime(duration)}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 w-40  justify-end">
-            {/* Volume Controls & Toggle Right Sidebar Button */}
-            <div className="flex items-center space-x-2 justify-end relative">
+          {/* MOBILE: Right controls - hidden on extra small screens, shown as minimal on small+ */}
+          <div className="hidden sm:flex items-center space-x-2 w-32 lg:w-40 justify-end">
+            <div className="flex items-center space-x-1 lg:space-x-2 justify-end relative">
 
-              {/* Toggle Right Sidebar Button */}
+              {/* Toggle Right Sidebar Button - hidden on mobile */}
               <button
                 onClick={onToggleRightSidebar}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                className="hidden lg:block p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
               >
                 <PanelRightOpen className={`w-4 h-4 transition-transform duration-300 ${isRightSidebarOpen ? "rotate-180" : "rotate-0"
                   }`} />
@@ -546,14 +554,14 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
               <button
                 ref={volumeButtonRef}
                 onClick={handleVolumeClick}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200"
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 {volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
 
-              {/* Volume Slider - Hidden on mobile, shown in dropdown */}
+              {/* Volume Slider - Hidden on mobile and small screens */}
               {!isMobile && (
-                <div className="h-6 flex items-center">
+                <div className="hidden md:flex h-6 items-center">
                   <input
                     type="range"
                     min="0"
@@ -561,7 +569,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
                     step="0.1"
                     value={volume}
                     onChange={handleVolumeChange}
-                    className="w-24 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                    className="w-16 lg:w-24 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
                     style={{
                       background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${volume * 100}%, ${isDarkMode ? "#374151" : "#e5e7eb"
                         } ${volume * 100}%, ${isDarkMode ? "#374151" : "#e5e7eb"} 100%)`,
@@ -576,12 +584,12 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
 
       </div>
 
-      {/* Volume Dropdown for Mobile - Single instance */}
+      {/* MOBILE: Volume Dropdown - positioned better for mobile screens */}
       {showVolumeSlider && isMobile && (
-        <div className="fixed bottom-20 right-3 z-50">
+        <div className="fixed bottom-16 left-1/2 transform -translate-x-1/2 z-50">
           <div
             ref={modalRef}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 w-48"
+            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 w-64"
           >
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium">Volume</span>

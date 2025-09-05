@@ -1,4 +1,3 @@
-// Enhanced Toast.jsx with FIFO queue management
 import { useState, useEffect } from "react"
 import { X, CheckCircle, XCircle, AlertTriangle, Info } from "lucide-react"
 
@@ -39,7 +38,6 @@ const Toast = ({
     }, 300)
   }
 
-  // Toast styles based on type
   const getToastStyles = () => {
     switch (type) {
       case TOAST_TYPES.SUCCESS:
@@ -53,17 +51,16 @@ const Toast = ({
     }
   }
 
-  // Toast icons based on type
   const getToastIcon = () => {
     switch (type) {
       case TOAST_TYPES.SUCCESS:
-        return <CheckCircle className="w-5 h-5" />
+        return <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
       case TOAST_TYPES.ERROR:
-        return <XCircle className="w-5 h-5" />
+        return <XCircle className="w-4 h-4 sm:w-5 sm:h-5" />
       case TOAST_TYPES.WARNING:
-        return <AlertTriangle className="w-5 h-5" />
+        return <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
       default:
-        return <Info className="w-5 h-5" />
+        return <Info className="w-4 h-4 sm:w-5 sm:h-5" />
     }
   }
 
@@ -71,33 +68,33 @@ const Toast = ({
 
   return (
     <div
-      className={`w-full max-w-sm transform transition-all duration-300 ${
+      className={`w-full max-w-xs sm:max-w-sm transform transition-all duration-300 ${
         show ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
-      } ${getToastStyles()} rounded-lg shadow-lg p-3`}
+      } ${getToastStyles()} rounded-lg shadow-lg p-2 sm:p-3`}
     >
-      <div className="flex items-start space-x-3">
+      <div className="flex items-start space-x-2 sm:space-x-3">
         <div className="flex-shrink-0">
           {getToastIcon()}
         </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium break-words leading-snug">{message}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs sm:text-sm font-medium break-words leading-snug">{message}</p>
         </div>
         <button
           onClick={handleClose}
-          className="flex-shrink-0 text-current opacity-50 hover:opacity-100 transition-opacity ml-2"
+          className="flex-shrink-0 text-current opacity-50 hover:opacity-100 transition-opacity ml-1 sm:ml-2"
           aria-label="Close"
         >
-          <X className="w-4 h-4" />
+          <X className="w-3 h-3 sm:w-4 sm:h-4" />
         </button>
       </div>
     </div>
   )
 }
 
-// Enhanced Toast Container with stacking
+// Enhanced Toast Container with mobile positioning
 export const ToastContainer = ({ toasts = [], onRemoveToast }) => {
   return (
-    <div className="fixed right-4 top-20 z-[70] flex flex-col items-end space-y-2">
+    <div className="fixed right-2 sm:right-4 top-16 sm:top-20 z-[70] flex flex-col items-end space-y-1 sm:space-y-2 max-w-[calc(100vw-1rem)] sm:max-w-none">
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
@@ -112,7 +109,7 @@ export const ToastContainer = ({ toasts = [], onRemoveToast }) => {
   )
 }
 
-// Enhanced hook with FIFO queue management
+// Rest of useToast hook remains unchanged
 export const useToast = (maxToasts = 4) => {
   const [toasts, setToasts] = useState([])
 
@@ -136,7 +133,6 @@ export const useToast = (maxToasts = 4) => {
     setToasts(prev => {
       let updatedToasts = [...prev, newToast]
       
-      // If we exceed maxToasts, remove the oldest ones (FIFO)
       if (updatedToasts.length > maxToasts) {
         const toastsToRemove = updatedToasts.length - maxToasts
         updatedToasts = updatedToasts.slice(toastsToRemove)
@@ -156,7 +152,6 @@ export const useToast = (maxToasts = 4) => {
     setToasts([])
   }
 
-  // Check if a similar toast already exists (prevent duplicates within 2 seconds)
   const hasSimilarToast = (message, type) => {
     const now = Date.now()
     return toasts.some(toast => 
@@ -166,7 +161,6 @@ export const useToast = (maxToasts = 4) => {
     )
   }
 
-  // Enhanced showToast that prevents duplicates
   const showUniqueToast = (message, type = TOAST_TYPES.INFO, duration = 5000) => {
     if (!hasSimilarToast(message, type)) {
       return showToast(message, type, duration)
@@ -174,13 +168,11 @@ export const useToast = (maxToasts = 4) => {
     return null
   }
 
-  // Convenience methods
   const showSuccessToast = (message, duration) => showUniqueToast(message, TOAST_TYPES.SUCCESS, duration)
   const showErrorToast = (message, duration) => showUniqueToast(message, TOAST_TYPES.ERROR, duration)
   const showWarningToast = (message, duration) => showUniqueToast(message, TOAST_TYPES.WARNING, duration)
   const showInfoToast = (message, duration) => showUniqueToast(message, TOAST_TYPES.INFO, duration)
 
-  // Authentication specific toasts
   const showAuthToast = (message, isSuccess = true, duration = 4000) => {
     return isSuccess ? showSuccessToast(message, duration) : showErrorToast(message, duration)
   }

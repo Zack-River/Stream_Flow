@@ -5,7 +5,7 @@ import FormInput from "../common/FormInput"
 import * as Yup from "yup"
 import { X, Mail, Lock, User } from "lucide-react"
 
-// Validation schemas
+// Validation schemas (unchanged)
 const signInSchema = Yup.object({
   email: Yup.string()
     .email("Please enter a valid email address")
@@ -45,7 +45,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
   const [isVisible, setIsVisible] = useState(false)
   const [rememberMe, setRememberMe] = useState(true)
 
-  // Persistent form values using useState
+  // Persistent form values using useState (unchanged)
   const [signInValues, setSignInValues] = useState({
     email: "",
     password: ""
@@ -58,7 +58,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
     confirmPassword: ""
   })
 
-  // Handle modal opening/closing animations
+  // Handle modal opening/closing animations (unchanged)
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode)
@@ -68,7 +68,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
     }
   }, [isOpen, initialMode])
 
-  // Handle form submissions
+  // Handle form submissions (unchanged)
   const handleSignInSubmit = async (values, { setSubmitting, setFieldError }) => {
     try {
       console.log("Sign in attempt:", values.email)
@@ -84,20 +84,17 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
             showAuthToast('You are already logged in!', true)
           }
         } else {
-          // Let the parent handle the welcome toast
           if (onAuthSuccess) {
-            onAuthSuccess(result.user, false) // false = not registration
+            onAuthSuccess(result.user, false)
           }
         }
         
-        // Clear form and close modal
         clearAllForms()
         handleClose()
       }
     } catch (error) {
       console.error('Sign in error:', error)
       
-      // Handle specific field errors
       if (error.message.includes('email') || error.message.includes('password')) {
         if (error.message.toLowerCase().includes('email')) {
           setFieldError('email', error.message)
@@ -127,19 +124,16 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
       const result = await register(userData, null)
       
       if (result.success) {
-        // Let the parent handle the registration toast
         if (onAuthSuccess) {
-          onAuthSuccess(result.user, true) // true = registration
+          onAuthSuccess(result.user, true)
         }
         
-        // Clear form and close modal
         clearAllForms()
         handleClose()
       }
     } catch (error) {
       console.error('Sign up error:', error)
       
-      // Handle specific field errors
       if (error.message.toLowerCase().includes('username')) {
         setFieldError('username', 'Username already exists')
       } else if (error.message.toLowerCase().includes('email')) {
@@ -178,7 +172,6 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
     }
   }
 
-  // Clear all forms (useful for logout or reset)
   const clearAllForms = () => {
     setSignInValues({
       email: "",
@@ -197,32 +190,32 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[60] p-2 sm:p-4"
       onClick={handleBackgroundClick}
     >
       <div
-        className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 w-full max-w-md transform transition-all duration-300 ${
+        className={`bg-white/95 dark:bg-gray-800/95 backdrop-blur-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 w-full max-w-sm mx-2 sm:max-w-md sm:mx-0 transform transition-all duration-300 ${
           isVisible ? "translate-y-0 opacity-100 scale-100" : "translate-y-8 opacity-0 scale-95"
         }`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200/50 dark:border-gray-700/50">
-          <h2 className="text-2xl font-bold bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200/50 dark:border-gray-700/50">
+          <h2 className="text-lg sm:text-2xl font-bold bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 bg-clip-text text-transparent">
             {mode === "signin" ? "Welcome Back" : "Join StreamFlow"}
           </h2>
           <button
             onClick={handleClose}
-            className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             disabled={isLoading}
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Sign In Form */}
         {mode === "signin" && (
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <Formik
               initialValues={signInValues}
               validationSchema={signInSchema}
@@ -230,13 +223,12 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
               enableReinitialize
             >
               {({ values, isSubmitting, handleSubmit }) => {
-                // Update state when form values change
                 useEffect(() => {
                   setSignInValues(values)
                 }, [values])
 
                 return (
-                  <div className="space-y-5">
+                  <div className="space-y-4 sm:space-y-5">
                     <Field name="email">
                       {({ field, form }) => (
                         <FormInput
@@ -267,12 +259,12 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
                       type="button"
                       onClick={handleSubmit}
                       disabled={isSubmitting || isLoading}
-                      className="w-full bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:via-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 text-white py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold hover:from-purple-700 hover:via-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-4 sm:mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
                     >
                       {isSubmitting || isLoading ? "Signing In..." : "Sign In"}
                     </button>
 
-                    <p className="text-center text-gray-600 dark:text-gray-400 text-sm mt-4">
+                    <p className="text-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm mt-3 sm:mt-4">
                       Don't have an account?{" "}
                       <button
                         type="button"
@@ -292,7 +284,7 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
 
         {/* Sign Up Form */}
         {mode === "signup" && (
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <Formik
               initialValues={signUpValues}
               validationSchema={signUpSchema}
@@ -300,13 +292,12 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
               enableReinitialize
             >
               {({ values, isSubmitting, handleSubmit }) => {
-                // Update state when form values change
                 useEffect(() => {
                   setSignUpValues(values)
                 }, [values])
 
                 return (
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <Field name="username">
                       {({ field, form }) => (
                         <FormInput
@@ -363,12 +354,12 @@ export default function AuthenticationModals({ isOpen, onClose, initialMode, onA
                       type="button"
                       onClick={handleSubmit}
                       disabled={isSubmitting || isLoading}
-                      className="w-full bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-purple-700 hover:via-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                      className="w-full bg-gradient-to-bl from-purple-600 via-purple-600 to-blue-600 text-white py-2.5 sm:py-3 rounded-lg sm:rounded-xl font-semibold hover:from-purple-700 hover:via-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg mt-4 sm:mt-6 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none text-sm sm:text-base"
                     >
                       {isSubmitting || isLoading ? "Creating Account..." : "Create Account"}
                     </button>
 
-                    <p className="text-center text-gray-600 dark:text-gray-400 text-sm mt-4">
+                    <p className="text-center text-gray-600 dark:text-gray-400 text-xs sm:text-sm mt-3 sm:mt-4">
                       Already have an account?{" "}
                       <button
                         type="button"
