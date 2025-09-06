@@ -122,7 +122,6 @@ export default function UploadsPage() {
               <Search className="w-4 h-4 text-purple-500" />
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Searching in your uploads
-                {isLocalSearch && <span className="ml-1 text-xs">(local search)</span>}
               </span>
             </div>
             {searchResults.length > 0 && (

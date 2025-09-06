@@ -190,7 +190,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder={isSearching ? "Searching..." : "Search songs, artists, genres..."}
+                placeholder={isSearching ? "Searching..." : "Search songs, artists ..."}
                 value={localSearchQuery}
                 onChange={handleSearchInputChange}
                 on={closeMobileSearch}
@@ -392,7 +392,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
                   <input
                     type="text"
-                    placeholder={isSearching ? "Searching..." : "Search songs, artists, genres..."}
+                    placeholder={isSearching ? "Searching..." : "Search songs, artists ..."}
                     value={localSearchQuery}
                     onChange={handleSearchInputChange}
                     className={`w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300 ${isSearching ? 'bg-purple-50 dark:bg-purple-900/10' : ''
