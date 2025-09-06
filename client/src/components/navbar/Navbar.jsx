@@ -12,7 +12,8 @@ import AuthenticationModals from "../authentication/AuthenticationModals"
 export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading }) {
   const { isDark, toggleTheme } = useTheme()
   const { isAuthenticated, user, logout } = useAuth()
-  const [showUserMenu, setShowUserMenu] = useState(false)
+  const [showUserMenuDesktop, setShowUserMenuDesktop] = useState(false)
+  const [showUserMenuMobile, setShowUserMenuMobile] = useState(false)
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery || "")
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authMode, setAuthMode] = useState("signin")
@@ -20,9 +21,12 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const location = useLocation()
 
-  const userMenuRef = useRef(null)
+  // Separate refs for desktop and mobile
+  const userMenuDesktopRef = useRef(null)
+  const userMenuButtonDesktopRef = useRef(null)
+  const userMenuMobileRef = useRef(null)
+  const userMenuButtonMobileRef = useRef(null)
   const searchInputRef = useRef(null)
-  const userMenuButtonRef = useRef(null)
 
   // Enhanced Toast hook with FIFO queue (max 4 toasts)
   const {
@@ -63,12 +67,27 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Check if click is outside both the menu button and the menu itself
-      if (userMenuRef.current &&
-        !userMenuRef.current.contains(event.target) &&
-        userMenuButtonRef.current &&
-        !userMenuButtonRef.current.contains(event.target)) {
-        setShowUserMenu(false)
+      // Check if click is outside both desktop menu button and menu itself
+      const isDesktopOutsideClick =
+        userMenuDesktopRef.current &&
+        !userMenuDesktopRef.current.contains(event.target) &&
+        userMenuButtonDesktopRef.current &&
+        !userMenuButtonDesktopRef.current.contains(event.target)
+
+      // Check if click is outside both mobile menu button and menu itself
+      const isMobileOutsideClick =
+        userMenuMobileRef.current &&
+        !userMenuMobileRef.current.contains(event.target) &&
+        userMenuButtonMobileRef.current &&
+        !userMenuButtonMobileRef.current.contains(event.target)
+
+      // Close menu if click is outside for either desktop or mobile
+      if (isDesktopOutsideClick) {
+        setShowUserMenuDesktop(false)
+      }
+
+      if (isMobileOutsideClick) {
+        setShowUserMenuMobile(false)
       }
 
       // Close mobile search if click is outside
@@ -81,14 +100,15 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
     const handleEscape = (event) => {
       if (event.key === "Escape") {
-        setShowUserMenu(false)
+        setShowUserMenuDesktop(false)
+        setShowUserMenuMobile(false)
         if (isMobileSearchOpen) {
           closeMobileSearch()
         }
       }
     }
 
-    if (showUserMenu || isMobileSearchOpen) {
+    if (showUserMenuDesktop || showUserMenuMobile || isMobileSearchOpen) {
       document.addEventListener("mousedown", handleClickOutside)
       document.addEventListener("keydown", handleEscape)
     }
@@ -97,20 +117,38 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
       document.removeEventListener("mousedown", handleClickOutside)
       document.removeEventListener("keydown", handleEscape)
     }
-  }, [showUserMenu, isMobileSearchOpen])
+  }, [showUserMenuDesktop, showUserMenuMobile, isMobileSearchOpen])
+
+  // Toggle user menu with proper event handling
+  const toggleUserMenuDesktop = (event) => {
+    event.stopPropagation();
+    setShowUserMenuDesktop(prev => !prev);
+    setShowUserMenuMobile(false); // Ensure mobile menu is closed
+  }
+
+  const toggleUserMenuMobile = (event) => {
+    event.stopPropagation();
+    setShowUserMenuMobile(prev => !prev);
+    setShowUserMenuDesktop(false); // Ensure desktop menu is closed
+  }
 
   const handleSignInClick = () => {
     setAuthMode("signin")
     setShowAuthModal(true)
+    setShowUserMenuDesktop(false)
+    setShowUserMenuMobile(false)
   }
 
   const handleSignUpClick = () => {
     setAuthMode("signup")
     setShowAuthModal(true)
+    setShowUserMenuDesktop(false)
+    setShowUserMenuMobile(false)
   }
 
   const handleLogout = async () => {
-    setShowUserMenu(false)
+    setShowUserMenuDesktop(false)
+    setShowUserMenuMobile(false)
     try {
       await logout()
       showGoodbyeToast()
@@ -148,6 +186,8 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
 
   const openMobileSearch = () => {
     setIsMobileSearchOpen(true)
+    setShowUserMenuDesktop(false)
+    setShowUserMenuMobile(false)
   }
 
   const closeMobileSearch = () => {
@@ -190,10 +230,9 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder={isSearching ? "Searching..." : "Search songs, artists ..."}
+                placeholder={isSearching ? "Searching..." : "Search songs, artists, genres..."}
                 value={localSearchQuery}
                 onChange={handleSearchInputChange}
-                on={closeMobileSearch}
                 className={`w-full pl-12 pr-12 py-2 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300 ${isSearching ? 'bg-purple-50 dark:bg-purple-900/10' : ''
                   }`}
               />
@@ -269,8 +308,8 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                 ) : (
                   <div className="relative">
                     <button
-                      ref={userMenuButtonRef}
-                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      ref={userMenuButtonMobileRef}
+                      onClick={toggleUserMenuMobile}
                       className="flex items-center p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 group"
                       title={`Logged in as ${user?.username || user?.name || 'User'}`}
                     >
@@ -288,11 +327,11 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                     </button>
 
                     {/* Mobile User Menu */}
-                    {showUserMenu && (
+                    {showUserMenuMobile && (
                       <div
-                        ref={userMenuRef}
+                        ref={userMenuMobileRef}
                         className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-3 z-50"
-                        style={{ top: '100%' }} // Ensure menu appears below the button
+                        style={{ top: '100%' }}
                       >
                         <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50 mb-2">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -304,7 +343,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                         </div>
 
                         <button
-                          onClick={() => setShowUserMenu(false)}
+                          onClick={() => setShowUserMenuMobile(false)}
                           className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
                         >
                           <User className="w-4 h-4 mr-3" />
@@ -312,7 +351,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                         </button>
 
                         <button
-                          onClick={() => setShowUserMenu(false)}
+                          onClick={() => setShowUserMenuMobile(false)}
                           className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
                         >
                           <Settings className="w-4 h-4 mr-3" />
@@ -348,7 +387,6 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                 )}
               </div>
             </div>
-
 
             {/* Desktop Layout: Logo - Home - Search - Theme - Auth */}
             <div className="hidden lg:flex items-center justify-between w-full space-x-5">
@@ -387,12 +425,13 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                       />
                     ) : (
                       <Search className="text-black dark:text-gray-400 w-5 h-5" />
-                    )}
+                    )
+                    }
                   </div>
 
                   <input
                     type="text"
-                    placeholder={isSearching ? "Searching..." : "Search songs, artists ..."}
+                    placeholder={isSearching ? "Searching..." : "Search songs, artists, genres..."}
                     value={localSearchQuery}
                     onChange={handleSearchInputChange}
                     className={`w-full pl-12 pr-12 py-3 bg-gray-100/80 dark:bg-gray-700/80 rounded-2xl border-gray-500/5 border-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-purple-100 dark:focus:bg-purple-900/20 backdrop-blur-sm transition-all duration-300 ${isSearching ? 'bg-purple-50 dark:bg-purple-900/10' : ''
@@ -451,9 +490,10 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                     )}
                   </div>
                 ) : (
-                  <div className="relative" ref={userMenuRef}>
+                  <div className="relative">
                     <button
-                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      ref={userMenuButtonDesktopRef}
+                      onClick={toggleUserMenuDesktop}
                       className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-300 group"
                       title={`Logged in as ${user?.username || user?.name || 'User'}`}
                     >
@@ -474,10 +514,11 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                     </button>
 
                     {/* Desktop User Menu */}
-                    {showUserMenu && (
-                      <div ref={userMenuRef}
+                    {showUserMenuDesktop && (
+                      <div
+                        ref={userMenuDesktopRef}
                         className="absolute right-0 mt-3 w-48 bg-white dark:bg-gray-800 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 py-3 z-50"
-                        style={{ top: '100%' }} // Ensure menu appears below the button
+                        style={{ top: '100%' }}
                       >
                         <div className="px-4 py-2 border-b border-gray-200/50 dark:border-gray-700/50 mb-2">
                           <p className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -489,7 +530,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                         </div>
 
                         <button
-                          onClick={() => setShowUserMenu(false)}
+                          onClick={() => setShowUserMenuDesktop(false)}
                           className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
                         >
                           <User className="w-4 h-4 mr-3" />
@@ -497,7 +538,7 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                         </button>
 
                         <button
-                          onClick={() => setShowUserMenu(false)}
+                          onClick={() => setShowUserMenuDesktop(false)}
                           className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
                         >
                           <Settings className="w-4 h-4 mr-3" />
