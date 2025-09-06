@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom"
 import { PuffLoader } from 'react-spinners'
 import SongCard from "../songCard/SongCard.jsx"
 import { ToastContainer, useToast } from "../common/Toast"
-import { useSearch } from "../../hooks/useDebounce"
+import { usePageSearch } from "../../hooks/usePageSearch" 
 import { useAuth } from "../../context/AuthContext"
 import {
   fetchSongsWithRetry,
@@ -44,18 +44,22 @@ export default function HomePage() {
     showAuthToast
   } = useToast(4)
 
-  // Debounced search hook
+  // Enhanced search hook that supports both API and local search
   const {
     searchQuery,
     searchResults,
     isSearching,
     handleSearchChange,
     clearSearch,
-    setSearchQuery
-  } = useSearch(
-    searchApiSongs, // search function
-    500, // 500ms debounce delay
-    (message, type, duration) => showUniqueToast(message, type, duration) // toast function
+    setSearchQuery,
+    hasResults,
+    isLocalSearch,
+    searchStats
+  } = usePageSearch(
+    songs, // Local songs array for fallback
+    searchApiSongs, // Your existing API search function
+    500, // Debounce delay (uses your useDebouncedCallback)
+    (message, type, duration) => showUniqueToast(message, type, duration) // Toast function
   )
 
   const truncate = (text, maxLength = 50) => {
@@ -220,7 +224,10 @@ export default function HomePage() {
                 {isSearching ? 'Searching...' : 'Loading your music...'}
               </h3>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                {isSearching ? `Searching for "${truncatedSearchQuery}"` : 'Fetching songs from our collection'}
+                {isSearching 
+                  ? `Searching for "${truncatedSearchQuery}"${isLocalSearch ? ' (local)' : ''}` 
+                  : 'Fetching songs from our collection'
+                }
               </p>
               {retryCount > 0 && !isSearching && (
                 <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
@@ -354,9 +361,10 @@ export default function HomePage() {
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold">
                 Search Results for "{truncatedSearchQuery}"
                 {isSearching && <span className="ml-2 text-xs sm:text-sm text-gray-500">(searching...)</span>}
+                {isLocalSearch && !isSearching && <span className="ml-2 text-xs sm:text-sm text-blue-500">(local search)</span>}
               </h2>
               <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                {filteredSongs.length} result{filteredSongs.length !== 1 ? 's' : ''}
+                {searchStats ? `${searchStats.results} of ${searchStats.total} results` : `${filteredSongs.length} result${filteredSongs.length !== 1 ? 's' : ''}`}
               </span>
             </div>
             {filteredSongs.length > 0 ? (
@@ -389,6 +397,8 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* Rest of the component remains the same... */}
+        
         {/* Featured Songs - Only show if not searching */}
         {!searchQuery && featuredSongs.length > 0 && (
           <div>
@@ -451,42 +461,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* No Songs Available */}
-        {!searchQuery && songs.length === 0 && !loading && (
-          <div className="flex flex-col items-center justify-center py-8 sm:py-12 md:py-16 px-4">
-            <div className="text-gray-400 text-4xl sm:text-5xl md:text-6xl mb-3 sm:mb-4">🎵</div>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center">No Songs Available</h2>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 text-center max-w-sm sm:max-w-md mb-4">
-              There are no songs available at the moment. Check back later or try refreshing the page.
-            </p>
-            <button
-              onClick={() => getAllSongs()}
-              className="bg-purple-600 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-purple-700 transition-colors"
-            >
-              Refresh
-            </button>
-          </div>
-        )}
-
-        {/* No Songs for Selected Genre */}
-        {!searchQuery && songs.length > 0 && filteredSongs.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 sm:py-12 md:py-16 px-4">
-            <div className="text-gray-400 text-4xl sm:text-5xl md:text-6xl mb-3 sm:mb-4">🎭</div>
-            <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 dark:text-white mb-2 text-center">
-              No {selectedGenre} Songs Found
-            </h2>
-            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 text-center max-w-sm sm:max-w-md mb-4">
-              No songs found for the selected genre. Try selecting a different genre.
-            </p>
-            <button
-              onClick={() => setSelectedGenre('all')}
-              className="bg-purple-600 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-purple-700 transition-colors"
-            >
-              Show All Songs
-            </button>
-          </div>
-        )}
-
         {/* Loading Overlay for Background Operations */}
         {(loading && songs.length > 0) || (isSearching && searchResults.length > 0) && (
           <div className="fixed top-12 sm:top-14 right-2 sm:right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 sm:p-4 z-50 border border-gray-200 dark:border-gray-700">
@@ -498,7 +472,7 @@ export default function HomePage() {
                 loading={true}
               />
               <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                {isSearching ? 'Searching...' : 'Refreshing...'}
+                {isSearching ? (isLocalSearch ? 'Searching locally...' : 'Searching...') : 'Refreshing...'}
               </span>
             </div>
           </div>

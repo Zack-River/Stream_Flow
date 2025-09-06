@@ -1,8 +1,9 @@
-import { ListMusic, Edit2, Trash2, X } from "lucide-react"
+import { ListMusic, Edit2, Trash2, X, Search } from "lucide-react"
 import SongCard from "../songCard/SongCard.jsx"
 import { useMusic } from "../../context/MusicContext"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, useOutletContext } from "react-router-dom"
 import { useState, useEffect } from "react"
+import { usePageSearch } from "../../hooks/usePageSearch"
 
 // Edit Playlist Modal Component
 const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
@@ -179,11 +180,38 @@ export default function PlaylistPage() {
   const { state, deletePlaylist, updatePlaylist } = useMusic()
   const { playlistId } = useParams()
   const navigate = useNavigate()
+  const { searchQuery: externalSearchQuery, clearSearch: externalClearSearch } = useOutletContext()
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
 
   // Find the specific playlist by ID
   const playlist = state.playlists?.find(p => p.id === playlistId)
+  const playlistSongs = playlist?.songs || []
+
+  // Use the new page search hook for local searching
+  const {
+    searchQuery,
+    searchResults,
+    isSearching,
+    handleSearchChange,
+    clearSearch,
+    setSearchQuery,
+    hasResults,
+    isLocalSearch,
+    searchStats
+  } = usePageSearch(playlistSongs)
+
+  // Sync external search query with internal search
+  useEffect(() => {
+    if (externalSearchQuery !== searchQuery) {
+      if (externalSearchQuery === "") {
+        clearSearch()
+      } else {
+        setSearchQuery(externalSearchQuery)
+        handleSearchChange(externalSearchQuery)
+      }
+    }
+  }, [externalSearchQuery, searchQuery, handleSearchChange, clearSearch, setSearchQuery])
 
   const handleUpdatePlaylist = (name, description) => {
     updatePlaylist(playlistId, { name, description })
@@ -198,6 +226,22 @@ export default function PlaylistPage() {
     setShowDeleteModal(false)
     navigate("/")
   }
+
+  // Clear search handler
+  const handleClearSearch = () => {
+    clearSearch()
+    if (externalClearSearch) {
+      externalClearSearch()
+    }
+  }
+
+  const truncate = (text, maxLength = 50) => {
+    if (!text || typeof text !== 'string') return text
+    const trimmed = text.trim()
+    return trimmed.length > maxLength ? `${trimmed.slice(0, maxLength - 1)}…` : trimmed
+  }
+
+  const truncatedSearchQuery = truncate(searchQuery, 50)
 
   // Handle case where playlist is not found
   if (!playlist) {
@@ -214,15 +258,13 @@ export default function PlaylistPage() {
     )
   }
 
-  const songs = playlist.songs || []
-
   return (
     <>
       <div className="space-y-6">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {playlist.name}
+              {searchQuery ? `Search in ${playlist.name}` : playlist.name}
             </h1>
             {playlist.description && (
               <p className="text-lg text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">
@@ -230,8 +272,18 @@ export default function PlaylistPage() {
               </p>
             )}
             <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
-              <span>{songs.length} {songs.length === 1 ? 'song' : 'songs'}</span>
+              <span>
+                {searchQuery 
+                  ? `${searchResults.length} of ${playlistSongs.length}`
+                  : playlistSongs.length
+                } {(searchQuery ? searchResults.length : playlistSongs.length) === 1 ? 'song' : 'songs'}
+              </span>
             </div>
+            {searchQuery && (
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+                Results for "{truncatedSearchQuery}" in this playlist
+              </p>
+            )}
           </div>
 
           <div className="flex items-center space-x-2 ml-4">
@@ -254,7 +306,30 @@ export default function PlaylistPage() {
           </div>
         </div>
 
-        {songs.length === 0 ? (
+        {/* Search Results Info */}
+        {searchQuery && playlistSongs.length > 0 && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
+            <div className="flex items-center space-x-2">
+              <Search className="w-4 h-4 text-purple-500" />
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Searching in this playlist
+                {isLocalSearch && <span className="ml-1 text-xs">(local search)</span>}
+              </span>
+            </div>
+            {searchResults.length > 0 && (
+              <button
+                onClick={handleClearSearch}
+                className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 text-sm font-medium self-start sm:self-center"
+              >
+                Show all songs
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Content */}
+        {playlistSongs.length === 0 ? (
+          // No songs in playlist
           <div className="text-center py-10">
             <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <ListMusic className="w-12 h-12 text-purple-500" />
@@ -265,11 +340,30 @@ export default function PlaylistPage() {
             <p className="text-gray-400 dark:text-gray-500 text-sm mb-8 max-w-md mx-auto">
               Start building your playlist by adding your favorite songs from your library.
             </p>
-
+          </div>
+        ) : searchQuery && searchResults.length === 0 ? (
+          // No search results
+          <div className="text-center py-10">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <Search className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
+            </div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              No matching songs found
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg mb-4 sm:mb-6 max-w-sm mx-auto">
+              No songs in this playlist match "{truncatedSearchQuery}"
+            </p>
+            <button
+              onClick={handleClearSearch}
+              className="bg-purple-600 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-purple-700 transition-colors"
+            >
+              Show All Songs
+            </button>
           </div>
         ) : (
+          // Show songs grid
           <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4">
-            {songs.map((song) => (
+            {searchResults.map((song) => (
               <SongCard key={song.id} song={song} />
             ))}
           </div>
