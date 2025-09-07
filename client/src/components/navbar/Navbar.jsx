@@ -341,22 +341,22 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                             {user?.email}
                           </p>
                         </div>
-
-                        <button
-                          onClick={() => setShowUserMenuMobile(false)}
-                          className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
-                        >
-                          <User className="w-4 h-4 mr-3" />
-                          Profile
-                        </button>
-
-                        <button
-                          onClick={() => setShowUserMenuMobile(false)}
-                          className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
-                        >
-                          <Settings className="w-4 h-4 mr-3" />
-                          Settings
-                        </button>
+                        <Link to="/profile" onClick={() => setShowUserMenuMobile(false)} >
+                          <div
+                            className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
+                          >
+                            <User className="w-4 h-4 mr-3" />
+                            Profile
+                          </div>
+                        </Link>
+                        <Link to="/settings" onClick={() => setShowUserMenuMobile(false)} >
+                          <button
+                            className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
+                          >
+                            <Settings className="w-4 h-4 mr-3" />
+                            Settings
+                          </button>
+                        </Link>
 
                         <hr className="my-2 border-gray-200/50 dark:border-gray-700/50 mx-4" />
 
@@ -528,22 +528,22 @@ export default function Navbar({ onMenuClick, onSearch, searchQuery, authLoading
                             {user?.email}
                           </p>
                         </div>
-
-                        <button
-                          onClick={() => setShowUserMenuDesktop(false)}
-                          className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
-                        >
-                          <User className="w-4 h-4 mr-3" />
-                          Profile
-                        </button>
-
-                        <button
-                          onClick={() => setShowUserMenuDesktop(false)}
-                          className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
-                        >
-                          <Settings className="w-4 h-4 mr-3" />
-                          Settings
-                        </button>
+                        <Link to="/profile" onClick={() => setShowUserMenuDesktop(false)} >
+                          <button
+                            className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
+                          >
+                            <User className="w-4 h-4 mr-3" />
+                            Profile
+                          </button>
+                        </Link>
+                        <Link to="/settings" onClick={() => setShowUserMenuDesktop(false)} >
+                          <button
+                            className="flex items-center px-4 py-3 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 w-11/12 text-left"
+                          >
+                            <Settings className="w-4 h-4 mr-3" />
+                            Settings
+                          </button>
+                        </Link>
 
                         <hr className="my-2 border-gray-200/50 dark:border-gray-700/50 mx-4" />
 

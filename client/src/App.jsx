@@ -8,17 +8,21 @@ import UploadsPage from "./components/uploads/UploadsPage"
 import FavoritesPage from "./components/favorites/FavoritesPage"
 import PlaylistPage from "./components/playlist/PlaylistPage"
 import NotFound404 from "./components/404Page/NotFound404"
+import ProfilePage from "./components/profile/ProfilePage"
+import SettingsPage from "./components/settings/SettingsPage"
 import "./index.css"
 
 const router = createBrowserRouter([
   {
-    path: '/', 
-    element: <Layout />, 
+    path: '/',
+    element: <Layout />,
     children: [
       { path: '', element: <HomePage /> },
       { path: 'uploads', element: <UploadsPage /> },
       { path: 'favorites', element: <FavoritesPage /> },
-      { path:"/playlist/:playlistId", element: <PlaylistPage /> }, 
+      { path: 'profile', element: <ProfilePage /> },
+      { path: 'settings', element: <SettingsPage /> },
+      { path: "/playlist/:playlistId", element: <PlaylistPage /> },
       { path: '*', element: <NotFound404 /> },
     ]
   }
