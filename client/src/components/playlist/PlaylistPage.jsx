@@ -58,9 +58,8 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
       }}
     >
       <div
-        className={`card rounded-xl sm:rounded-2xl w-full max-w-sm sm:max-w-md shadow-2xl mt-4 sm:mt-8 transform transition-all duration-300 ${
-          isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
-        }`}
+        className={`card rounded-xl sm:rounded-2xl w-full max-w-sm sm:max-w-md shadow-2xl mt-4 sm:mt-8 transform transition-all duration-300 ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+          }`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
@@ -277,7 +276,7 @@ export default function PlaylistPage() {
             )}
             <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               <span>
-                {searchQuery 
+                {searchQuery
                   ? `${searchResults.length} of ${playlistSongs.length}`
                   : playlistSongs.length
                 } {(searchQuery ? searchResults.length : playlistSongs.length) === 1 ? 'song' : 'songs'}
@@ -366,7 +365,7 @@ export default function PlaylistPage() {
           </div>
         ) : (
           // Show songs grid - Mobile-first responsive grid
-          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 lg:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
             {searchResults.map((song) => (
               <SongCard key={song.id} song={song} />
             ))}

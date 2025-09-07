@@ -8,7 +8,7 @@ import { usePageSearch } from "../../hooks/usePageSearch"
 export default function FavoritesPage() {
   const { state } = useMusic()
   const { searchQuery: externalSearchQuery, clearSearch: externalClearSearch } = useOutletContext()
-  
+
   // Use the new page search hook for local searching
   const {
     searchQuery,
@@ -59,14 +59,14 @@ export default function FavoritesPage() {
             {searchQuery ? `Search in Liked Songs` : 'Liked Songs'}
           </h1>
           <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
-            {searchQuery 
+            {searchQuery
               ? `Results for "${truncatedSearchQuery}" in your favorites`
               : 'Your favorite tracks'
             }
           </p>
         </div>
         <p className="text-gray-500 dark:text-gray-400 text-sm">
-          {searchQuery 
+          {searchQuery
             ? `${searchResults.length} of ${state.favorites.length}`
             : state.favorites.length
           } {(searchQuery ? searchResults.length : state.favorites.length) === 1 ? 'song' : 'songs'}
@@ -92,7 +92,7 @@ export default function FavoritesPage() {
           )}
         </div>
       )}
-      
+
       {/* Content */}
       {state.favorites.length === 0 ? (
         // No favorites at all
@@ -129,7 +129,7 @@ export default function FavoritesPage() {
         </div>
       ) : (
         // Show songs grid
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
           {searchResults.map((song) => (
             <SongCard key={song.id} song={song} />
           ))}

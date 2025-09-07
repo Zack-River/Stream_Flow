@@ -35,8 +35,8 @@ export default function RightSidebar({ isOpen, onClose }) {
       <div className={`
         fixed lg:sticky inset-0 lg:inset-y-0 lg:right-0 z-50 lg:z-20 
         transition-all duration-300 ease-in-out
-        ${isOpen 
-          ? "w-full lg:w-80 h-full" 
+        ${isOpen
+          ? "w-full lg:w-80 h-full"
           : "w-0 h-0 lg:h-full overflow-hidden"
         }
       `}>
@@ -49,8 +49,8 @@ export default function RightSidebar({ isOpen, onClose }) {
         `}>
 
           {/* MOBILE: Header with close button */}
-          <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-200/50 dark:border-gray-700/50 lg:border-none">
-            <h2 className="text-lg font-semibold lg:hidden">Now Playing</h2>
+          <div className="flex items-center justify-between p-4 lg:px-6 lg:pb-2 border-b border-gray-200/50 dark:border-gray-700/50 lg:border-none">
+            <h2 className="text-lg font-semibold">Now Playing</h2>
             <button
               onClick={handleClose}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors lg:hidden min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -58,15 +58,7 @@ export default function RightSidebar({ isOpen, onClose }) {
             >
               <X className="w-5 h-5" />
             </button>
-            
-            {/* DESKTOP: Close button in top-right */}
-            <button
-              onClick={handleClose}
-              className="hidden lg:block absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-              aria-label="Close sidebar"
-            >
-              <PanelRightClose className="w-4 h-4" />
-            </button>
+
           </div>
 
           {/* Sidebar content */}
@@ -96,7 +88,7 @@ export default function RightSidebar({ isOpen, onClose }) {
                     <p className="text-gray-600 dark:text-gray-400 truncate text-lg lg:text-base">{currentSong.artist}</p>
                     <p className="text-gray-500 dark:text-gray-500 text-sm truncate">{currentSong.album}</p>
                   </div>
-                  
+
                   {/* DESKTOP: Heart button on desktop */}
                   <div className="hidden lg:flex items-center space-x-2 ml-4">
                     <button

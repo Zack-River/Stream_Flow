@@ -3,7 +3,7 @@ import { useOutletContext } from "react-router-dom"
 import { PuffLoader } from 'react-spinners'
 import SongCard from "../songCard/SongCard.jsx"
 import { ToastContainer, useToast } from "../common/Toast"
-import { usePageSearch } from "../../hooks/usePageSearch" 
+import { usePageSearch } from "../../hooks/usePageSearch"
 import { useAuth } from "../../context/AuthContext"
 import {
   fetchSongsWithRetry,
@@ -76,7 +76,7 @@ export default function HomePage() {
 
   const handleAuthSuccess = (userData, isRegistration = false) => {
     console.log('Authentication successful from HomePage:', userData)
-    
+
     // Show appropriate welcome toast
     if (isRegistration) {
       showRegistrationToast(userData?.username || userData?.name || 'User')
@@ -190,7 +190,7 @@ export default function HomePage() {
   // Determine which songs to display
   const displaySongs = searchQuery ? searchResults : songs
   const truncatedSearchQuery = truncate(searchQuery, 50)
-  
+
   // Get unique genres for filter
   const availableGenres = getUniqueGenres(displaySongs)
 
@@ -224,8 +224,8 @@ export default function HomePage() {
                 {isSearching ? 'Searching...' : 'Loading your music...'}
               </h3>
               <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                {isSearching 
-                  ? `Searching for "${truncatedSearchQuery}"${isLocalSearch ? ' (local)' : ''}` 
+                {isSearching
+                  ? `Searching for "${truncatedSearchQuery}"${isLocalSearch ? ' (local)' : ''}`
                   : 'Fetching songs from our collection'
                 }
               </p>
@@ -246,7 +246,7 @@ export default function HomePage() {
           onAuthSuccess={handleAuthSuccess}
           showAuthToast={showAuthToast}
         />
-        
+
         {/* Toast Container */}
         <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       </>
@@ -300,7 +300,7 @@ export default function HomePage() {
           onAuthSuccess={handleAuthSuccess}
           showAuthToast={showAuthToast}
         />
-        
+
         {/* Toast Container */}
         <ToastContainer toasts={toasts} onRemoveToast={removeToast} />
       </>
@@ -311,7 +311,7 @@ export default function HomePage() {
     <>
       <div className="space-y-4 sm:space-y-6 md:space-y-8">
         <HeroSection />
-        
+
         {/* Genre Filter */}
         {availableGenres.length > 1 && !searchQuery && (
           <div className="mb-4 sm:mb-6">
@@ -368,11 +368,11 @@ export default function HomePage() {
               </span>
             </div>
             {filteredSongs.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
                 {filteredSongs.map((song) => (
-                  <SongCard 
-                    key={song.id} 
-                    song={song} 
+                  <SongCard
+                    key={song.id}
+                    song={song}
                     onAuthRequired={handleAuthRequired}
                   />
                 ))}
@@ -398,7 +398,7 @@ export default function HomePage() {
         )}
 
         {/* Rest of the component remains the same... */}
-        
+
         {/* Featured Songs - Only show if not searching */}
         {!searchQuery && featuredSongs.length > 0 && (
           <div>
@@ -410,11 +410,11 @@ export default function HomePage() {
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
               {featuredSongs.map((song) => (
-                <SongCard 
-                  key={song.id} 
-                  song={song} 
+                <SongCard
+                  key={song.id}
+                  song={song}
                   onAuthRequired={handleAuthRequired}
                 />
               ))}
@@ -433,11 +433,11 @@ export default function HomePage() {
                 </span>
               )}
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
               {trendingSongs.map((song) => (
-                <SongCard 
-                  key={`trending-${song.id}`} 
-                  song={song} 
+                <SongCard
+                  key={`trending-${song.id}`}
+                  song={song}
                   onAuthRequired={handleAuthRequired}
                 />
               ))}
@@ -449,11 +449,11 @@ export default function HomePage() {
         {!searchQuery && filteredSongs.length > featuredSongs.length + trendingSongs.length && (
           <div>
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6">All Songs</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
               {filteredSongs.slice(featuredSongs.length + trendingSongs.length).map((song) => (
-                <SongCard 
-                  key={`all-${song.id}`} 
-                  song={song} 
+                <SongCard
+                  key={`all-${song.id}`}
+                  song={song}
                   onAuthRequired={handleAuthRequired}
                 />
               ))}

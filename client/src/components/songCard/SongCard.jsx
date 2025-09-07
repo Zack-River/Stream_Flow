@@ -56,14 +56,14 @@ export default function SongCard({
 
   const formatArtists = (artistString) => {
     if (!artistString) return "Unknown Artist"
-    
+
     let cleanedString = artistString
       .replace(/\\"/g, '"')
       .replace(/^"/, '')
       .replace(/"$/, '')
-    
+
     let artists = []
-    
+
     if (cleanedString.includes('","')) {
       artists = cleanedString.split('","')
     }
@@ -73,7 +73,7 @@ export default function SongCard({
     else {
       artists = [cleanedString]
       const separators = [',', ' & ', ' and ', ' ft. ', ' feat. ', ' featuring ', '+', ' x ']
-      
+
       for (const separator of separators) {
         if (artists.length === 1 && artists[0].includes(separator)) {
           artists = artists[0].split(separator)
@@ -81,20 +81,20 @@ export default function SongCard({
         }
       }
     }
-    
+
     artists = artists
       .map(artist => artist.trim())
       .map(artist => artist.replace(/^["']+|["']+$/g, ''))
       .filter(artist => artist.length > 0)
       .filter(artist => !['ft', 'feat', 'featuring', 'and'].includes(artist.toLowerCase()))
-    
+
     artists = [...new Set(artists)]
-    
+
     if (artists.length === 0) return "Unknown Artist"
     if (artists.length === 1) return artists[0]
     if (artists.length === 2) return `${artists[0]} & ${artists[1]}`
     if (artists.length <= 4) return artists.join(', ')
-    
+
     return `${artists.slice(0, 3).join(', ')} & ${artists.length - 3} more`
   }
 
@@ -150,6 +150,13 @@ export default function SongCard({
     errorMessage: 'You must be signed in to add favorites.',
     authMode: 'signin'
   })
+
+  // Card click handler for playing music
+  const handleCardClick = () => {
+    if (!isEditMode) {
+      guardedPlaySong()
+    }
+  }
 
   const handlePlayPause = (e) => {
     e.stopPropagation()
@@ -238,9 +245,12 @@ export default function SongCard({
   return (
     <>
       <div
-        className="bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer transform hover:scale-[1.02] border border-gray-100 dark:border-gray-700 group"
+        className={`bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] border border-gray-100 dark:border-gray-700 group ${!isEditMode ? 'cursor-pointer' : ''
+          }`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={handleCardClick}
+        title={!isEditMode ? (isAuthenticated ? (isPlaying ? "Pause" : "Play") : "Sign in to play music") : undefined}
       >
         <div className="relative mb-2 sm:mb-3">
           {isUploaded && (
@@ -284,8 +294,8 @@ export default function SongCard({
               <button
                 onClick={handlePlayPause}
                 className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg ${isAuthenticated
-                    ? "bg-white text-gray-900"
-                    : "bg-purple-500 text-white hover:bg-purple-600"
+                  ? "bg-white text-gray-900"
+                  : "bg-purple-500 text-white hover:bg-purple-600"
                   }`}
                 title={isAuthenticated ? (isPlaying ? "Pause" : "Play") : "Sign in to play music"}
               >
@@ -302,10 +312,10 @@ export default function SongCard({
             <button
               onClick={handleFavorite}
               className={`absolute top-1 sm:top-2 right-1 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all ${!isAuthenticated
-                  ? "bg-gray-500 bg-opacity-70 text-gray-300 hover:bg-purple-500 hover:text-white hover:bg-opacity-90"
-                  : isFavorite
-                    ? "bg-red-500 text-white hover:bg-red-600"
-                    : "bg-black bg-opacity-50 text-white hover:bg-opacity-70"
+                ? "bg-gray-500 bg-opacity-70 text-gray-300 hover:bg-purple-500 hover:text-white hover:bg-opacity-90"
+                : isFavorite
+                  ? "bg-red-500 text-white hover:bg-red-600"
+                  : "bg-black bg-opacity-50 text-white hover:bg-opacity-70"
                 }`}
               title={!isAuthenticated ? "Sign in to add to favorites" : (isFavorite ? "Remove from favorites" : "Add to favorites")}
             >
@@ -318,8 +328,8 @@ export default function SongCard({
           <h3 className="font-semibold text-xs sm:text-sm truncate leading-tight" title={displayTitle}>
             {displayTitle}
           </h3>
-          <p 
-            className="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs truncate leading-tight" 
+          <p
+            className="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs truncate leading-tight"
             title={rawArtist}
           >
             {displayArtist}
@@ -334,8 +344,8 @@ export default function SongCard({
                 <button
                   onClick={handleMenuToggle}
                   className={`p-0.5 sm:p-1 rounded-full transition-colors ${isAuthenticated
-                      ? "hover:bg-gray-100 dark:hover:bg-gray-700"
-                      : "hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400"
+                    ? "hover:bg-gray-100 dark:hover:bg-gray-700"
+                    : "hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400"
                     }`}
                   title={isAuthenticated ? "More options" : "Sign in for more options"}
                 >
@@ -376,7 +386,8 @@ export default function SongCard({
                           Sign in to access menu options
                         </p>
                         <button
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation()
                             setShowMenu(false)
                             if (onAuthRequired) {
                               onAuthRequired('signin')

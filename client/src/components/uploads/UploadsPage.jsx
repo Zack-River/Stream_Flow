@@ -80,7 +80,7 @@ export default function UploadsPage() {
             </h1>
             <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
               <span>
-                {searchQuery 
+                {searchQuery
                   ? `${searchResults.length} of ${songs.length}`
                   : songs.length
                 } {(searchQuery ? searchResults.length : songs.length) === 1 ? 'song' : 'songs'}
@@ -92,7 +92,7 @@ export default function UploadsPage() {
               </p>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-2 self-start sm:self-center">
             {isEditMode ? (
               <button
@@ -182,7 +182,7 @@ export default function UploadsPage() {
           </div>
         ) : (
           // Show songs grid
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
             {searchResults.map((song) => (
               <div key={song.id} className="group">
                 <SongCard
@@ -198,8 +198,8 @@ export default function UploadsPage() {
 
       {/* Upload/Edit Modal */}
       {showUploadModal && (
-        <UploadModal 
-          onClose={handleUploadModalClose} 
+        <UploadModal
+          onClose={handleUploadModalClose}
           editSong={editingSong}
         />
       )}
