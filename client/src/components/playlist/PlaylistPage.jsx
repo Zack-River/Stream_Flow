@@ -50,7 +50,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-[60] p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black bg-opacity-60 flex items-start justify-center z-[60] p-3 sm:p-4 overflow-y-auto"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           handleClose()
@@ -58,12 +58,13 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
       }}
     >
       <div
-        className={`card rounded-2xl w-full max-w-md shadow-2xl mt-8 transform transition-all duration-300 ${isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
-          }`}
+        className={`card rounded-xl sm:rounded-2xl w-full max-w-sm sm:max-w-md shadow-2xl mt-4 sm:mt-8 transform transition-all duration-300 ${
+          isVisible ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
+        }`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Edit Playlist</h2>
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">Edit Playlist</h2>
           <button
             onClick={handleClose}
             className="btn-ghost p-2 rounded-lg"
@@ -72,7 +73,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Playlist Name *
@@ -83,7 +84,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
               onChange={(e) => setName(e.target.value)}
               maxLength={30}
               placeholder="Enter playlist name"
-              className="input-primary w-full px-3 py-2 rounded-lg text-sm placeholder-gray-400"
+              className="input-primary w-full px-3 py-2.5 sm:py-2 rounded-lg text-sm placeholder-gray-400"
               autoFocus
               required
             />
@@ -99,7 +100,7 @@ const EditPlaylistModal = ({ isOpen, onClose, playlist, onUpdatePlaylist }) => {
               placeholder="Add a description for your playlist"
               maxLength={70}
               rows={3}
-              className="input-primary w-full px-3 py-2 rounded-lg text-sm placeholder-gray-400 resize-none"
+              className="input-primary w-full px-3 py-2.5 sm:py-2 rounded-lg text-sm placeholder-gray-400 resize-none"
             />
           </div>
 
@@ -132,7 +133,7 @@ const DeletePlaylistModal = ({ isOpen, onClose, playlist, onConfirmDelete }) => 
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose()
@@ -140,16 +141,16 @@ const DeletePlaylistModal = ({ isOpen, onClose, playlist, onConfirmDelete }) => 
       }}
     >
       <div
-        className="card rounded-2xl p-4 sm:p-6 max-w-xs sm:max-w-sm w-full shadow-2xl"
+        className="card rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-xs sm:max-w-sm w-full shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
-          <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+        <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 bg-red-100 dark:bg-red-900/30 rounded-full">
+          <Trash2 className="w-5 h-5 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
         </div>
 
         <h3 className="text-base sm:text-lg font-bold mb-3 sm:mb-4 text-center">Delete Playlist</h3>
 
-        <p className="text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 text-xs sm:text-sm text-center">
+        <p className="text-gray-600 dark:text-gray-400 mb-3 sm:mb-4 text-xs sm:text-sm text-center">
           Are you sure you want to delete <span className="font-semibold">"{playlist.name}"</span>?
         </p>
 
@@ -160,13 +161,13 @@ const DeletePlaylistModal = ({ isOpen, onClose, playlist, onConfirmDelete }) => 
         <div className="flex space-x-2 sm:space-x-3">
           <button
             onClick={onClose}
-            className="btn-secondary flex-1 px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-medium"
+            className="btn-secondary flex-1 px-3 sm:px-4 py-2.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium"
           >
             Cancel
           </button>
           <button
             onClick={onConfirmDelete}
-            className="flex-1 px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs sm:text-sm font-medium"
+            className="flex-1 px-3 sm:px-4 py-2.5 sm:py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs sm:text-sm font-medium"
           >
             Delete
           </button>
@@ -246,12 +247,14 @@ export default function PlaylistPage() {
   // Handle case where playlist is not found
   if (!playlist) {
     return (
-      <div className="text-center py-16">
-        <div className="w-20 h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-6">
-          <ListMusic className="w-10 h-10 text-gray-400" />
+      <div className="text-center py-8 sm:py-16 px-4">
+        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+          <ListMusic className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
         </div>
-        <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">Playlist not found</h3>
-        <p className="text-gray-500 dark:text-gray-400 text-lg">
+        <h3 className="text-lg sm:text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+          Playlist not found
+        </h3>
+        <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg">
           The playlist you're looking for doesn't exist.
         </p>
       </div>
@@ -260,18 +263,19 @@ export default function PlaylistPage() {
 
   return (
     <>
-      <div className="space-y-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+      <div className="space-y-4 sm:space-y-6 px-4 sm:px-0">
+        {/* Header Section */}
+        <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2 break-words">
               {searchQuery ? `Search in ${playlist.name}` : playlist.name}
             </h1>
             {playlist.description && (
-              <p className="text-lg text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">
+              <p className="text-sm sm:text-base lg:text-lg text-gray-600 dark:text-gray-300 line-clamp-2 mb-3 sm:mb-4">
                 {playlist.description}
               </p>
             )}
-            <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center space-x-3 sm:space-x-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               <span>
                 {searchQuery 
                   ? `${searchResults.length} of ${playlistSongs.length}`
@@ -280,45 +284,46 @@ export default function PlaylistPage() {
               </span>
             </div>
             {searchQuery && (
-              <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
+              <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mt-1 break-words">
                 Results for "{truncatedSearchQuery}" in this playlist
               </p>
             )}
           </div>
 
-          <div className="flex items-center space-x-2 ml-4">
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-2 sm:ml-4 flex-shrink-0">
             <button
               onClick={() => setShowEditModal(true)}
-              className="btn-ghost flex items-center space-x-2 px-4 py-2 rounded-xl hover:text-purple-600 dark:hover:text-purple-400"
+              className="btn-ghost flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl hover:text-purple-600 dark:hover:text-purple-400 text-sm"
               title="Edit playlist"
             >
               <Edit2 className="w-4 h-4" />
-              <span>Edit</span>
+              <span className="hidden xs:inline sm:inline">Edit</span>
             </button>
             <button
               onClick={handleDeleteClick}
-              className="btn-ghost flex items-center space-x-2 px-4 py-2 rounded-xl hover:text-red-600 dark:hover:text-red-400"
+              className="btn-ghost flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 rounded-lg sm:rounded-xl hover:text-red-600 dark:hover:text-red-400 text-sm"
               title="Delete playlist"
             >
               <Trash2 className="w-4 h-4" />
-              <span>Delete</span>
+              <span className="hidden xs:inline sm:inline">Delete</span>
             </button>
           </div>
         </div>
 
         {/* Search Results Info */}
         {searchQuery && playlistSongs.length > 0 && (
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 gap-2">
+          <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between mb-3 sm:mb-4 lg:mb-6">
             <div className="flex items-center space-x-2">
-              <Search className="w-4 h-4 text-purple-500" />
-              <span className="text-sm text-gray-600 dark:text-gray-400">
+              <Search className="w-4 h-4 text-purple-500 flex-shrink-0" />
+              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 Searching in this playlist
               </span>
             </div>
             {searchResults.length > 0 && (
               <button
                 onClick={handleClearSearch}
-                className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 text-sm font-medium self-start sm:self-center"
+                className="text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 text-xs sm:text-sm font-medium self-start sm:self-center"
               >
                 Show all songs
               </button>
@@ -329,39 +334,39 @@ export default function PlaylistPage() {
         {/* Content */}
         {playlistSongs.length === 0 ? (
           // No songs in playlist
-          <div className="text-center py-10">
-            <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 rounded-full flex items-center justify-center mx-auto mb-6">
-              <ListMusic className="w-12 h-12 text-purple-500" />
+          <div className="text-center py-8 sm:py-10">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/30 dark:to-purple-800/30 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+              <ListMusic className="w-10 h-10 sm:w-12 sm:h-12 text-purple-500" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-3">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
               No songs in this playlist yet
             </h3>
-            <p className="text-gray-400 dark:text-gray-500 text-sm mb-8 max-w-md mx-auto">
+            <p className="text-gray-400 dark:text-gray-500 text-sm mb-6 sm:mb-8 max-w-sm mx-auto px-4">
               Start building your playlist by adding your favorite songs from your library.
             </p>
           </div>
         ) : searchQuery && searchResults.length === 0 ? (
           // No search results
-          <div className="text-center py-10">
+          <div className="text-center py-8 sm:py-10">
             <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
               <Search className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400" />
             </div>
             <h3 className="text-lg sm:text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
               No matching songs found
             </h3>
-            <p className="text-gray-500 dark:text-gray-400 text-base sm:text-lg mb-4 sm:mb-6 max-w-sm mx-auto">
+            <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base lg:text-lg mb-4 sm:mb-6 max-w-sm mx-auto px-4 break-words">
               No songs in this playlist match "{truncatedSearchQuery}"
             </p>
             <button
               onClick={handleClearSearch}
-              className="bg-purple-600 text-white px-4 sm:px-6 py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-purple-700 transition-colors"
+              className="bg-purple-600 text-white px-4 sm:px-6 py-2.5 sm:py-2 rounded-lg text-sm sm:text-base font-medium hover:bg-purple-700 transition-colors"
             >
               Show All Songs
             </button>
           </div>
         ) : (
-          // Show songs grid
-          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-4">
+          // Show songs grid - Mobile-first responsive grid
+          <div className="grid grid-cols-2 xs:grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-2 sm:gap-3 lg:gap-4">
             {searchResults.map((song) => (
               <SongCard key={song.id} song={song} />
             ))}
