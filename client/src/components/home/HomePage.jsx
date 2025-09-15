@@ -369,10 +369,12 @@ export default function HomePage() {
             </div>
             {filteredSongs.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
-                {filteredSongs.map((song) => (
+                {filteredSongs.map((song, index) => (
                   <SongCard
-                    key={song.id}
+                    key={song.id || song._id}
                     song={song}
+                    playlist={filteredSongs}
+                    index={index}
                     onAuthRequired={handleAuthRequired}
                   />
                 ))}
@@ -397,8 +399,6 @@ export default function HomePage() {
           </div>
         )}
 
-        {/* Rest of the component remains the same... */}
-
         {/* Featured Songs - Only show if not searching */}
         {!searchQuery && featuredSongs.length > 0 && (
           <div>
@@ -411,10 +411,12 @@ export default function HomePage() {
               )}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
-              {featuredSongs.map((song) => (
+              {featuredSongs.map((song, index) => (
                 <SongCard
-                  key={song.id}
+                  key={song.id || song._id}
                   song={song}
+                  playlist={filteredSongs}
+                  index={index}
                   onAuthRequired={handleAuthRequired}
                 />
               ))}
@@ -434,10 +436,12 @@ export default function HomePage() {
               )}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
-              {trendingSongs.map((song) => (
+              {trendingSongs.map((song, index) => (
                 <SongCard
-                  key={`trending-${song.id}`}
+                  key={`trending-${song.id || song._id}`}
                   song={song}
+                  playlist={filteredSongs}
+                  index={featuredSongs.length + index}
                   onAuthRequired={handleAuthRequired}
                 />
               ))}
@@ -450,10 +454,12 @@ export default function HomePage() {
           <div>
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 sm:mb-6">All Songs</h2>
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-5 lg:gap-6">
-              {filteredSongs.slice(featuredSongs.length + trendingSongs.length).map((song) => (
+              {filteredSongs.slice(featuredSongs.length + trendingSongs.length).map((song, index) => (
                 <SongCard
-                  key={`all-${song.id}`}
+                  key={`all-${song.id || song._id}`}
                   song={song}
+                  playlist={filteredSongs}
+                  index={featuredSongs.length + trendingSongs.length + index}
                   onAuthRequired={handleAuthRequired}
                 />
               ))}

@@ -4,7 +4,7 @@ import { useMusic } from "../../context/MusicContext"
 import { formatTime, parseTime } from "../../utils/audioUtils"
 
 export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }) {
-  const { state, dispatch } = useMusic()
+  const { state, dispatch, playNext, playPrevious, toggleShuffle, hasNext, hasPrevious } = useMusic()
   const audioRef = useRef(null)
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -17,7 +17,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
   const volumeButtonRef = useRef(null)
   const isSeekingRef = useRef(false) // Track seeking state
 
-  const { currentSong, isPlaying, volume, currentTime, duration } = state
+  const { currentSong, isPlaying, volume, currentTime, duration, isShuffled, isRepeating, isSkipping } = state
   
   // Handle both song ID formats
   const currentSongId = currentSong?.id || currentSong?._id
@@ -172,8 +172,11 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
         audio.currentTime = 0
         dispatch({ type: "SET_TIME", payload: 0 })
         audio.play().catch(e => console.error("Repeat playback error:", e))
+      } else if (hasNext()) {
+        // Auto-play next song
+        playNext()
       } else {
-        // Normal behavior - stop playing
+        // No next song available - stop playing
         dispatch({ type: "SET_PLAYING", payload: false })
         dispatch({ type: "SET_TIME", payload: 0 })
         if (animationRef.current) {
@@ -191,6 +194,11 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
       isSeekingRef.current = false
       // Update our state to match the actual audio time
       dispatch({ type: "SET_TIME", payload: audio.currentTime })
+      
+      // Reset skipping state after seek completes
+      if (isSkipping) {
+        dispatch({ type: "SET_SKIPPING", payload: false })
+      }
     }
 
     // Add volume change handler to ensure consistency
@@ -222,7 +230,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
       audio.removeEventListener("seeked", handleSeeked)
       audio.removeEventListener("volumechange", handleVolumeChange)
     }
-  }, [dispatch, isDragging, repeatMode]) // Removed volume dependency to prevent restart
+  }, [dispatch, isDragging, repeatMode, hasNext, playNext, isSkipping]) // Added dependencies
 
   // Play/pause control
   useEffect(() => {
@@ -347,8 +355,43 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     }
   }
 
+  // Enhanced skip handlers with debouncing
+  const handleSkipNext = () => {
+    if (isSkipping) return // Prevent multiple clicks
+    
+    if (hasNext()) {
+      playNext()
+    } else {
+      console.log("No next song available")
+    }
+  }
+
+  const handleSkipPrevious = () => {
+    if (isSkipping) return // Prevent multiple clicks
+    
+    if (hasPrevious()) {
+      playPrevious()
+    } else {
+      console.log("No previous song available")
+    }
+  }
+
+  // Enhanced shuffle handler
+  const handleShuffle = () => {
+    toggleShuffle()
+  }
+
+  // Enhanced repeat handler
   const handleRepeat = () => {
-    setRepeatMode(prev => prev === 'off' ? 'one' : 'off')
+    if (isRepeating) {
+      // Turn off global repeat but keep single song repeat option
+      dispatch({ type: "TOGGLE_REPEAT" })
+      setRepeatMode(repeatMode === 'one' ? 'off' : 'one')
+    } else {
+      // Turn on global repeat
+      dispatch({ type: "TOGGLE_REPEAT" })
+      setRepeatMode('off')
+    }
   }
 
   const handleFavorite = () => {
@@ -425,7 +468,8 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
   const displayTitle = currentSong.title || "Unknown Title"
   const displayArtist = currentSong.artist || currentSong.singer || "Unknown Artist"
   const displayCover = currentSong.cover || currentSong.coverImageUrl || "https://placehold.co/48x48/EFEFEF/AAAAAA?text=Cover"
-return (
+
+  return (
     <>
       {/* Audio Player Container - no longer needs positioning classes since parent handles it */}
       <div className="bg-white/95 dark:bg-gray-800/95 border-t border-gray-200/50 dark:border-gray-700/50 px-3 py-2 sm:px-4 lg:px-6 backdrop-blur-lg shadow-2xl w-full">
@@ -477,25 +521,47 @@ return (
           <div className="flex flex-col space-y-2 sm:space-y-1 flex-1 sm:max-w-md">
             {/* Control buttons */}
             <div className="flex items-center justify-center space-x-2 sm:space-x-4">
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <button 
+                onClick={handleShuffle}
+                disabled={isSkipping}
+                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
+                  isShuffled 
+                    ? "text-purple-500 hover:text-purple-600 bg-purple-50 dark:bg-purple-900/20" 
+                    : "hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
                 <Shuffle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
+              
+              <button 
+                onClick={handleSkipPrevious}
+                disabled={isSkipping || !hasPrevious()}
+                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
+              
               <button
                 onClick={handlePlayPause}
-                className="w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-105 shadow-lg"
+                disabled={isSkipping}
+                className="w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />}
               </button>
-              <button className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center">
+              
+              <button 
+                onClick={handleSkipNext}
+                disabled={isSkipping || !hasNext()}
+                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
                 <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
+              
               <button 
                 onClick={handleRepeat}
-                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center ${
-                  repeatMode === 'one' 
+                disabled={isSkipping}
+                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
+                  (isRepeating || repeatMode === 'one')
                     ? "text-purple-500 hover:text-purple-600 bg-purple-50 dark:bg-purple-900/20" 
                     : "hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                 }`}
@@ -521,7 +587,8 @@ return (
                   onChange={handleSeekChange}
                   onMouseUp={handleSeekEnd}
                   onTouchEnd={handleTouchEnd}
-                  className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer select-none"
+                  disabled={isSkipping}
+                  className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer select-none disabled:cursor-not-allowed disabled:opacity-50"
                   style={{
                     background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${progressPercentage}%, ${isDarkMode ? "#374151" : "#e5e7eb"
                       } ${progressPercentage}%, ${isDarkMode ? "#374151" : "#e5e7eb"
@@ -617,6 +684,16 @@ return (
                 {volume === 0 ? 'Unmute' : 'Mute'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Loading/Skipping Indicator */}
+      {isSkipping && (
+        <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/50 text-white px-4 py-2 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            <span className="text-sm">Loading...</span>
           </div>
         </div>
       )}
