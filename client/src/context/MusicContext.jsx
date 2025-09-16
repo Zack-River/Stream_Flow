@@ -35,7 +35,8 @@ const initialState = {
     },
   ],
   isShuffled: false,
-  isRepeating: false,
+  repeatMode: 'off', // 'off', 'all', 'one'
+  isRepeating: false, // Deprecated - kept for backward compatibility
   history: [], // Song history for better navigation
   isSkipping: false, // Prevent multiple skip operations
 }
@@ -86,17 +87,35 @@ function musicReducer(state, action) {
       let newQueue = playlist.length > 0 ? [...playlist] : [song]
       let newOriginalPlaylist = [...newQueue]
       
-      // Apply shuffle if requested
-      if (shouldShuffle) {
+      // Apply shuffle if requested or if shuffle is already on
+      const shouldApplyShuffle = shouldShuffle || state.isShuffled
+      if (shouldApplyShuffle) {
         const currentSongIndex = findSongIndex(newQueue, currentSongId)
         if (currentSongIndex > -1) {
           // Remove current song from array before shuffling
           const songToPlay = newQueue.splice(currentSongIndex, 1)[0]
-          newQueue = shuffleArray(newQueue)
+          
+          // Create endless shuffled queue
+          const shuffledSongs = []
+          const songsPool = [...newQueue]
+          
+          // Generate multiple rounds of shuffled songs
+          for (let round = 0; round < 10; round++) {
+            const roundShuffle = shuffleArray([...songsPool])
+            shuffledSongs.push(...roundShuffle)
+          }
+          
           // Put current song at the beginning
-          newQueue.unshift(songToPlay)
+          newQueue = [songToPlay, ...shuffledSongs]
         } else {
-          newQueue = shuffleArray(newQueue)
+          // Create endless shuffle
+          const shuffledSongs = []
+          const songsPool = [...newQueue]
+          for (let round = 0; round < 10; round++) {
+            const roundShuffle = shuffleArray([...songsPool])
+            shuffledSongs.push(...roundShuffle)
+          }
+          newQueue = shuffledSongs
         }
       }
       
@@ -110,7 +129,7 @@ function musicReducer(state, action) {
         originalPlaylist: newOriginalPlaylist,
         queueIndex: queueIndex >= 0 ? queueIndex : 0,
         playlist: playlist,
-        isShuffled: shouldShuffle,
+        isShuffled: shouldApplyShuffle,
         isPlaying: true,
         currentTime: 0,
         duration: 0,
@@ -122,7 +141,7 @@ function musicReducer(state, action) {
       }
 
     case "PLAY_NEXT":
-      if (state.queue.length === 0 || state.queueIndex === -1) return state
+      if (state.queue.length === 0 || state.queueIndex === -1) return { ...state, isSkipping: false }
       
       const nextIndex = state.queueIndex + 1
       const hasNext = nextIndex < state.queue.length
@@ -135,6 +154,7 @@ function musicReducer(state, action) {
           queueIndex: nextIndex,
           currentTime: 0,
           duration: 0,
+          isPlaying: true, // Ensure playing state is true
           isSkipping: false,
           history: state.currentSong 
             ? [state.currentSong, ...state.history.slice(0, 49)]
@@ -142,8 +162,8 @@ function musicReducer(state, action) {
         }
       }
       
-      // If no next song and repeat is on, go to beginning
-      if (state.isRepeating && state.queue.length > 0) {
+      // If no next song and repeat all is on, go to beginning
+      if (state.repeatMode === 'all' && state.queue.length > 0) {
         const firstSong = state.queue[0]
         return {
           ...state,
@@ -151,6 +171,7 @@ function musicReducer(state, action) {
           queueIndex: 0,
           currentTime: 0,
           duration: 0,
+          isPlaying: true, // Ensure playing state is true
           isSkipping: false,
           history: state.currentSong 
             ? [state.currentSong, ...state.history.slice(0, 49)]
@@ -161,7 +182,7 @@ function musicReducer(state, action) {
       return { ...state, isSkipping: false }
 
     case "PLAY_PREVIOUS":
-      if (state.queue.length === 0 || state.queueIndex === -1) return state
+      if (state.queue.length === 0 || state.queueIndex === -1) return { ...state, isSkipping: false }
       
       // If we're more than 3 seconds into the song, restart current song
       if (state.currentTime > 3) {
@@ -183,12 +204,13 @@ function musicReducer(state, action) {
           queueIndex: prevIndex,
           currentTime: 0,
           duration: 0,
+          isPlaying: true, // Ensure playing state is true
           isSkipping: false
         }
       }
       
-      // If no previous song and repeat is on, go to end
-      if (state.isRepeating && state.queue.length > 0) {
+      // If no previous song and repeat all is on, go to end
+      if (state.repeatMode === 'all' && state.queue.length > 0) {
         const lastIndex = state.queue.length - 1
         const lastSong = state.queue[lastIndex]
         return {
@@ -197,6 +219,7 @@ function musicReducer(state, action) {
           queueIndex: lastIndex,
           currentTime: 0,
           duration: 0,
+          isPlaying: true, // Ensure playing state is true
           isSkipping: false
         }
       }
@@ -214,18 +237,34 @@ function musicReducer(state, action) {
         newQueueForShuffle = [...state.originalPlaylist]
         newIsShuffled = false
       } else {
-        // Turn on shuffle
+        // Turn on shuffle - create endless shuffled queue
         const currentSongIndex = findSongIndex(state.queue, shuffleCurrentSongId)
-        let queueToShuffle = [...state.queue]
+        let queueToShuffle = [...state.originalPlaylist] // Use original playlist for endless shuffle
         
         if (currentSongIndex > -1) {
           // Remove current song before shuffling
-          const currentSong = queueToShuffle.splice(currentSongIndex, 1)[0]
-          queueToShuffle = shuffleArray(queueToShuffle)
+          const currentSong = queueToShuffle.splice(findSongIndex(queueToShuffle, shuffleCurrentSongId), 1)[0]
+          
+          // Create a much longer shuffled queue for endless play
+          const shuffledSongs = []
+          const songsPool = [...queueToShuffle]
+          
+          // Generate multiple rounds of shuffled songs (e.g., 10 rounds)
+          for (let round = 0; round < 10; round++) {
+            const roundShuffle = shuffleArray([...songsPool])
+            shuffledSongs.push(...roundShuffle)
+          }
+          
           // Put current song at the beginning
-          newQueueForShuffle = [currentSong, ...queueToShuffle]
+          newQueueForShuffle = [currentSong, ...shuffledSongs]
         } else {
-          newQueueForShuffle = shuffleArray(queueToShuffle)
+          // Create endless shuffle without current song
+          const shuffledSongs = []
+          for (let round = 0; round < 10; round++) {
+            const roundShuffle = shuffleArray([...queueToShuffle])
+            shuffledSongs.push(...roundShuffle)
+          }
+          newQueueForShuffle = shuffledSongs
         }
         newIsShuffled = true
       }
@@ -241,7 +280,34 @@ function musicReducer(state, action) {
       }
 
     case "TOGGLE_REPEAT":
-      return { ...state, isRepeating: !state.isRepeating }
+      // Cycle through repeat modes: off -> all -> one -> off
+      let newRepeatMode
+      switch (state.repeatMode) {
+        case 'off':
+          newRepeatMode = 'all'
+          break
+        case 'all':
+          newRepeatMode = 'one'
+          break
+        case 'one':
+          newRepeatMode = 'off'
+          break
+        default:
+          newRepeatMode = 'off'
+      }
+      
+      return { 
+        ...state, 
+        repeatMode: newRepeatMode,
+        isRepeating: newRepeatMode !== 'off' // Update for backward compatibility
+      }
+
+    case "SET_REPEAT_MODE":
+      return { 
+        ...state, 
+        repeatMode: action.payload,
+        isRepeating: action.payload !== 'off' // Update for backward compatibility
+      }
 
     case "ADD_TO_QUEUE":
       const songToAdd = action.payload
@@ -390,6 +456,7 @@ function musicReducer(state, action) {
         uploads: action.payload.uploads || state.uploads,
         playlists: action.payload.playlists || state.playlists,
         volume: action.payload.volume !== undefined ? action.payload.volume : state.volume,
+        repeatMode: action.payload.repeatMode || state.repeatMode,
       }
     
     default:
@@ -426,14 +493,15 @@ export function MusicProvider({ children }) {
         uploads: state.uploads,
         playlists: state.playlists,
         volume: state.volume,
+        repeatMode: state.repeatMode,
       }
       localStorage.setItem("musicAppData", JSON.stringify(dataToSave))
     } catch (error) {
       console.error("Error saving data to localStorage:", error)
     }
-  }, [state.favorites, state.uploads, state.playlists, state.volume, isInitialized])
+  }, [state.favorites, state.uploads, state.playlists, state.volume, state.repeatMode, isInitialized])
 
-  // Enhanced music control functions
+  // Enhanced music control functions with proper state management
   const playSong = (song, playlist = [], shouldShuffle = false) => {
     dispatch({ 
       type: "PLAY_SONG", 
@@ -461,6 +529,10 @@ export function MusicProvider({ children }) {
     dispatch({ type: "TOGGLE_REPEAT" })
   }
 
+  const setRepeatMode = (mode) => {
+    dispatch({ type: "SET_REPEAT_MODE", payload: mode })
+  }
+
   const addToQueue = (song) => {
     dispatch({ type: "ADD_TO_QUEUE", payload: song })
   }
@@ -475,11 +547,13 @@ export function MusicProvider({ children }) {
 
   // Helper functions
   const hasNext = () => {
-    return state.queueIndex < state.queue.length - 1 || state.isRepeating
+    if (state.queue.length === 0 || state.queueIndex === -1) return false
+    return state.queueIndex < state.queue.length - 1 || state.repeatMode === 'all'
   }
 
   const hasPrevious = () => {
-    return state.queueIndex > 0 || state.isRepeating || state.currentTime > 3
+    if (state.queue.length === 0 || state.queueIndex === -1) return false
+    return state.queueIndex > 0 || state.repeatMode === 'all' || state.currentTime > 3
   }
 
   const getNextSong = () => {
@@ -490,7 +564,7 @@ export function MusicProvider({ children }) {
       return state.queue[nextIndex]
     }
     
-    if (state.isRepeating && state.queue.length > 0) {
+    if (state.repeatMode === 'all' && state.queue.length > 0) {
       return state.queue[0]
     }
     
@@ -509,7 +583,7 @@ export function MusicProvider({ children }) {
       return state.queue[prevIndex]
     }
     
-    if (state.isRepeating && state.queue.length > 0) {
+    if (state.repeatMode === 'all' && state.queue.length > 0) {
       return state.queue[state.queue.length - 1]
     }
     
@@ -553,6 +627,7 @@ export function MusicProvider({ children }) {
     playPrevious,
     toggleShuffle,
     toggleRepeat,
+    setRepeatMode,
     // Queue management
     addToQueue,
     removeFromQueue,

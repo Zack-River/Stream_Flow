@@ -4,20 +4,19 @@ import { useMusic } from "../../context/MusicContext"
 import { formatTime, parseTime } from "../../utils/audioUtils"
 
 export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }) {
-  const { state, dispatch, playNext, playPrevious, toggleShuffle, hasNext, hasPrevious } = useMusic()
+  const { state, dispatch, playNext, playPrevious, toggleShuffle, toggleRepeat, hasNext, hasPrevious } = useMusic()
   const audioRef = useRef(null)
   const [showVolumeSlider, setShowVolumeSlider] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
   const [isDarkMode, setIsDarkMode] = useState(false)
   const [audioLoaded, setAudioLoaded] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [repeatMode, setRepeatMode] = useState('off') // 'off', 'one'
   const animationRef = useRef(null) // For manual time updates
   const modalRef = useRef(null)
   const volumeButtonRef = useRef(null)
   const isSeekingRef = useRef(false) // Track seeking state
 
-  const { currentSong, isPlaying, volume, currentTime, duration, isShuffled, isRepeating, isSkipping } = state
+  const { currentSong, isPlaying, volume, currentTime, duration, isShuffled, repeatMode, isSkipping } = state
   
   // Handle both song ID formats
   const currentSongId = currentSong?.id || currentSong?._id
@@ -83,15 +82,23 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     isSeekingRef.current = false // Reset seeking state
 
     if (audioRef.current && currentSong) {
-      audioRef.current.pause()
+      const audio = audioRef.current
+      
+      // Pause current audio first
+      audio.pause()
+      audio.currentTime = 0 // Reset to beginning
+      
       // Handle both URL formats
       const audioUrl = currentSong.url || currentSong.audioUrl
-      audioRef.current.src = audioUrl
-      audioRef.current.load()
-      audioRef.current.currentTime = 0 // Ensure reset
       
-      // IMPORTANT: Apply volume immediately after loading new song
-      audioRef.current.volume = volume
+      // Only change src if it's different
+      if (audio.src !== audioUrl) {
+        audio.src = audioUrl
+        audio.load()
+      }
+      
+      // Apply volume immediately after loading new song
+      audio.volume = volume
     }
 
     // Cancel any existing animation
@@ -104,7 +111,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [currentSongId, dispatch]) // Removed volume dependency to prevent restart
+  }, [currentSongId, dispatch, volume]) // Added volume back to dependencies
 
   // Manual time updates for problematic audio sources
   const updateTimeManually = () => {
@@ -167,14 +174,22 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     }
 
     const handleEnded = () => {
+      // Clear any existing skipping state first
+      dispatch({ type: "SET_SKIPPING", payload: false })
+      
       if (repeatMode === 'one') {
         // Repeat the current song
         audio.currentTime = 0
         dispatch({ type: "SET_TIME", payload: 0 })
-        audio.play().catch(e => console.error("Repeat playback error:", e))
+        // Use a small delay to ensure state is updated
+        setTimeout(() => {
+          audio.play().catch(e => console.error("Repeat playback error:", e))
+        }, 50)
       } else if (hasNext()) {
         // Auto-play next song
-        playNext()
+        setTimeout(() => {
+          playNext()
+        }, 100)
       } else {
         // No next song available - stop playing
         dispatch({ type: "SET_PLAYING", payload: false })
@@ -232,7 +247,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     }
   }, [dispatch, isDragging, repeatMode, hasNext, playNext, isSkipping]) // Added dependencies
 
-  // Play/pause control
+  // Play/pause control with proper synchronization
   useEffect(() => {
     const audio = audioRef.current
     if (!audio || !currentSong) return
@@ -248,18 +263,23 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
         }
         animationRef.current = requestAnimationFrame(updateTimeManually)
 
-        // Ensure audio is properly loaded
-        if (!audioLoaded) {
+        // Ensure audio is properly loaded before playing
+        if (audio.readyState < 3) { // Less than HAVE_FUTURE_DATA
           audio.load()
-          // Apply volume after loading
           audio.volume = volume
           
-          await new Promise(resolve => {
+          // Wait for audio to be ready
+          await new Promise((resolve, reject) => {
+            let attempts = 0
+            const maxAttempts = 50 // 5 seconds max wait
+            
             const checkReady = () => {
+              attempts++
               if (audio.readyState >= 3) { // HAVE_FUTURE_DATA
-                // Ensure volume is still correct
                 audio.volume = volume
                 resolve()
+              } else if (attempts >= maxAttempts) {
+                reject(new Error('Audio failed to load'))
               } else {
                 setTimeout(checkReady, 100)
               }
@@ -268,37 +288,55 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
           })
         }
 
-        await audio.play()
+        // Only play if we're still supposed to be playing (state might have changed)
+        if (isPlaying) {
+          await audio.play()
 
-        // Refresh duration after playback starts and ensure volume
-        if (audio.duration !== Infinity && !isNaN(audio.duration)) {
-          dispatch({ type: "SET_DURATION", payload: audio.duration })
+          // Set duration if available
+          if (audio.duration !== Infinity && !isNaN(audio.duration)) {
+            dispatch({ type: "SET_DURATION", payload: audio.duration })
+          }
+          
+          // Final volume check
+          audio.volume = volume
         }
-        
-        // Final volume check
-        audio.volume = volume
       } catch (error) {
         console.error("Playback error:", error)
         dispatch({ type: "SET_PLAYING", payload: false })
 
-        if (error.name === "NotSupportedError") {
+        if (error.name === "NotSupportedError" || error.name === "NotAllowedError") {
           console.log("Retrying playback...")
           setTimeout(() => {
-            audio.load()
-            audio.volume = volume // Apply volume before retry
-            audio.play().catch(e => console.error("Retry failed:", e))
+            if (isPlaying) { // Only retry if still supposed to be playing
+              audio.load()
+              audio.volume = volume
+              audio.play().catch(e => {
+                console.error("Retry failed:", e)
+                dispatch({ type: "SET_PLAYING", payload: false })
+              })
+            }
           }, 300)
         }
+      }
+    }
+
+    const pauseAudio = () => {
+      try {
+        if (!audio.paused) {
+          audio.pause()
+        }
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current)
+        }
+      } catch (error) {
+        console.error("Pause error:", error)
       }
     }
 
     if (isPlaying) {
       playAudio()
     } else {
-      audio.pause()
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
+      pauseAudio()
     }
 
     return () => {
@@ -306,7 +344,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
         cancelAnimationFrame(animationRef.current)
       }
     }
-  }, [isPlaying, currentSong, dispatch, audioLoaded]) // Removed volume dependency to prevent restart
+  }, [isPlaying, currentSongId, dispatch, volume]) // Include currentSongId to ensure proper sync
 
   // Volume control - Enhanced to handle both user preference and immediate application
   useEffect(() => {
@@ -355,11 +393,15 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     }
   }
 
-  // Enhanced skip handlers with debouncing
+  // Enhanced skip handlers with proper state management
   const handleSkipNext = () => {
     if (isSkipping) return // Prevent multiple clicks
     
     if (hasNext()) {
+      // Pause current audio immediately to prevent overlap
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause()
+      }
       playNext()
     } else {
       console.log("No next song available")
@@ -370,6 +412,10 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     if (isSkipping) return // Prevent multiple clicks
     
     if (hasPrevious()) {
+      // Pause current audio immediately to prevent overlap
+      if (audioRef.current && !audioRef.current.paused) {
+        audioRef.current.pause()
+      }
       playPrevious()
     } else {
       console.log("No previous song available")
@@ -381,17 +427,9 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     toggleShuffle()
   }
 
-  // Enhanced repeat handler
+  // Enhanced repeat handler - cycles through off -> all -> one -> off
   const handleRepeat = () => {
-    if (isRepeating) {
-      // Turn off global repeat but keep single song repeat option
-      dispatch({ type: "TOGGLE_REPEAT" })
-      setRepeatMode(repeatMode === 'one' ? 'off' : 'one')
-    } else {
-      // Turn on global repeat
-      dispatch({ type: "TOGGLE_REPEAT" })
-      setRepeatMode('off')
-    }
+    toggleRepeat()
   }
 
   const handleFavorite = () => {
@@ -460,6 +498,30 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
   const progressPercentage = duration && duration > 0 ?
     Math.max(0, Math.min(100, (currentTime / duration) * 100)) : 0
 
+  // Get repeat button icon based on mode
+  const getRepeatIcon = () => {
+    switch (repeatMode) {
+      case 'one':
+        return <Repeat1 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      case 'all':
+      case 'off':
+      default:
+        return <Repeat className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+    }
+  }
+
+  // Get repeat button style based on mode (all purple as requested)
+  const getRepeatButtonStyle = () => {
+    switch (repeatMode) {
+      case 'one':
+      case 'all':
+        return "text-purple-500 hover:text-purple-600 bg-purple-50 dark:bg-purple-900/20"
+      case 'off':
+      default:
+        return "hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+    }
+  }
+
   if (!currentSong) {
     return null
   }
@@ -480,7 +542,7 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
           preload="auto"
         />
 
-        {/* Rest of the audio player content remains the same */}
+        {/* Rest of the audio player content */}
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
           
           {/* Song Info + Heart */}
@@ -560,13 +622,10 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
               <button 
                 onClick={handleRepeat}
                 disabled={isSkipping}
-                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
-                  (isRepeating || repeatMode === 'one')
-                    ? "text-purple-500 hover:text-purple-600 bg-purple-50 dark:bg-purple-900/20" 
-                    : "hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${getRepeatButtonStyle()}`}
+                title={`Repeat: ${repeatMode === 'off' ? 'Off' : repeatMode === 'all' ? 'All' : 'One'}`}
               >
-                {repeatMode === 'one' ? <Repeat1 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Repeat className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                {getRepeatIcon()}
               </button>
             </div>
 

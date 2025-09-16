@@ -124,13 +124,14 @@ export default function SongCard({
 
   const playSongCore = () => {
     if (isCurrentSong) {
+      // If it's the current song, just toggle play/pause
       dispatch({ type: "TOGGLE_PLAY" })
     } else {
-      // If we have a playlist context, use it for better queue management
+      // If it's a different song, play it
       if (playlist.length > 0) {
-        playSong(normalizedSong, playlist)
+        playSong(normalizedSong, playlist, state.isShuffled) // Respect current shuffle state
       } else {
-        playSong(normalizedSong)
+        playSong(normalizedSong, [normalizedSong], state.isShuffled) // Create single-song playlist
       }
     }
   }
@@ -296,21 +297,23 @@ export default function SongCard({
       >
         <div className="relative mb-2 sm:mb-3">
           {/* Status badges */}
-          {isUploaded && (
-            <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-green-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium z-10">
-              Uploaded
-            </div>
-          )}
+          <div className="absolute top-1 sm:top-2 left-1 sm:left-2 flex flex-col gap-1 z-10">
+            {isUploaded && (
+              <div className="bg-green-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium">
+                Uploaded
+              </div>
+            )}
+            {displayGenre && !isUploaded && (
+              <div className="bg-purple-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium">
+                {displayGenre}
+              </div>
+            )}
+          </div>
 
-          {displayGenre && !isUploaded && (
-            <div className="absolute top-1 sm:top-2 left-1 sm:left-2 bg-purple-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium z-10">
-              {displayGenre}
-            </div>
-          )}
-
+          {/* Queue indicator - Fixed positioning */}
           {isInQueue && !isCurrentSong && (
-            <div className="absolute top-1 sm:top-2 right-20 sm:right-24 bg-blue-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium z-10">
-              <ListMusic className="w-2 h-2 sm:w-2.5 sm:h-2.5 inline" />
+            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 bg-blue-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium z-10 flex items-center">
+              <ListMusic className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
             </div>
           )}
 
@@ -359,11 +362,11 @@ export default function SongCard({
             </div>
           )}
 
-          {/* Favorite button */}
+          {/* Favorite button - Always in bottom right */}
           {!isEditMode && (
             <button
               onClick={handleFavorite}
-              className={`absolute top-1 sm:top-2 right-1 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all ${!isAuthenticated
+              className={`absolute bottom-1 sm:bottom-2 right-1 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all ${!isAuthenticated
                 ? "bg-gray-500 bg-opacity-70 text-gray-300 hover:bg-purple-500 hover:text-white hover:bg-opacity-90"
                 : isFavorite
                   ? "bg-red-500 text-white hover:bg-red-600"
