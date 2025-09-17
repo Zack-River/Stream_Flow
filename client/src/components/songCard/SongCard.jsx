@@ -1,171 +1,58 @@
-import { useState, useRef, useEffect } from "react"
-import { Play, Pause, Heart, MoreHorizontal, Trash2, Music, Edit2, Plus, PlayCircle, ListMusic } from "lucide-react"
-import { useMusic } from "../../context/MusicContext"
-import { useAuth } from "../../context/AuthContext"
-import { useAuthGuard } from "../../utils/authGuardUtils"
-import { showErrorToast, showSuccessToast } from "../../utils/toastUtils"
+import React from 'react'
+import { useSongCard } from '../../hooks/useSongCard'
+import { formatArtists } from '../../utils/songDisplayUtils'
+import SongCover from './SongCover'
+import SongInfo from './SongInfo'
+import SongMenu from './SongMenu'
+import DeleteConfirmModal from './DeleteConfirmModal'
 
 export default function SongCard({
   song,
   isEditMode = false,
   onEditClick = null,
   onAuthRequired = null,
-  playlist = [], // Optional playlist context for shuffle play
-  playlistName = null // Name of the playlist for better UX
+  playlist = [],
+  playlistName = null
 }) {
-  const { 
-    state, 
-    dispatch, 
-    playSong,
-    addToQueue,
-    hasNext,
-    hasPrevious
-  } = useMusic()
-  const { isAuthenticated } = useAuth()
+  const songCardHook = useSongCard(song, onAuthRequired, playlist)
   
-  const [isHovered, setIsHovered] = useState(false)
-  const [showMenu, setShowMenu] = useState(false)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const menuRef = useRef(null)
-
   const {
-    guardPlayAction,
-    guardFavoriteAction,
-    createGuardedAction
-  } = useAuthGuard(isAuthenticated, onAuthRequired)
+    isHovered,
+    setIsHovered,
+    showMenu,
+    setShowMenu,
+    showDeleteConfirm,
+    setShowDeleteConfirm,
+    menuRef,
+    songId,
+    isCurrentSong,
+    isPlaying,
+    isFavorite,
+    isUploaded,
+    isInQueue,
+    guardedPlaySong,
+    guardedToggleFavorite,
+    handleMenuOption,
+    confirmDelete,
+    isAuthenticated
+  } = songCardHook
 
-  const songId = song.id || song._id
-  const isCurrentSong = state.currentSong && (state.currentSong.id || state.currentSong._id) === songId
-  const isPlaying = isCurrentSong && state.isPlaying
-  const isFavorite = state.favorites.some((fav) => (fav.id || fav._id) === songId)
-  const isUploaded = song.isUploaded || false
-  const isInQueue = state.queue.some((queueSong) => (queueSong.id || queueSong._id) === songId)
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false)
-      }
+  // Event handlers - FIXED: Ensure proper event handling
+  const handleCardClick = (e) => {
+    // Prevent if clicking on interactive elements
+    if (e.target.closest('button') || e.target.closest('[role="button"]')) {
+      return
     }
-
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        setShowMenu(false)
-      }
-    }
-
-    if (showMenu) {
-      document.addEventListener("mousedown", handleClickOutside)
-      document.addEventListener("keydown", handleEscape)
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-      document.removeEventListener("keydown", handleEscape)
-    }
-  }, [showMenu])
-
-  const formatArtists = (artistString) => {
-    if (!artistString) return "Unknown Artist"
-
-    let cleanedString = artistString
-      .replace(/\\"/g, '"')
-      .replace(/^"/, '')
-      .replace(/"$/, '')
-
-    let artists = []
-
-    if (cleanedString.includes('","')) {
-      artists = cleanedString.split('","')
-    }
-    else if (cleanedString.includes('\",\"')) {
-      artists = cleanedString.split('\",\"')
-    }
-    else {
-      artists = [cleanedString]
-      const separators = [',', ' & ', ' and ', ' ft. ', ' feat. ', ' featuring ', '+', ' x ']
-
-      for (const separator of separators) {
-        if (artists.length === 1 && artists[0].includes(separator)) {
-          artists = artists[0].split(separator)
-          break
-        }
-      }
-    }
-
-    artists = artists
-      .map(artist => artist.trim())
-      .map(artist => artist.replace(/^["']+|["']+$/g, ''))
-      .filter(artist => artist.length > 0)
-      .filter(artist => !['ft', 'feat', 'featuring', 'and'].includes(artist.toLowerCase()))
-
-    artists = [...new Set(artists)]
-
-    if (artists.length === 0) return "Unknown Artist"
-    if (artists.length === 1) return artists[0]
-    if (artists.length === 2) return `${artists[0]} & ${artists[1]}`
-    if (artists.length <= 4) return artists.join(', ')
-
-    return `${artists.slice(0, 3).join(', ')} & ${artists.length - 3} more`
-  }
-
-  const normalizedSong = {
-    id: songId,
-    title: song.title,
-    artist: song.artist || song.singer,
-    album: song.album,
-    duration: song.duration,
-    cover: song.cover || song.coverImageUrl,
-    url: song.url || song.audioUrl,
-    isUploaded: isUploaded,
-    genre: song.genre,
-    category: song.category
-  }
-
-  const playSongCore = () => {
-    if (isCurrentSong) {
-      // If it's the current song, just toggle play/pause
-      dispatch({ type: "TOGGLE_PLAY" })
-    } else {
-      // If it's a different song, play it
-      if (playlist.length > 0) {
-        playSong(normalizedSong, playlist, state.isShuffled) // Respect current shuffle state
-      } else {
-        playSong(normalizedSong, [normalizedSong], state.isShuffled) // Create single-song playlist
-      }
-    }
-  }
-
-  const toggleFavoriteCore = () => {
-    if (isFavorite) {
-      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: songId })
-      showSuccessToast(`Removed "${song.title}" from favorites`)
-    } else {
-      dispatch({ type: "ADD_TO_FAVORITES", payload: normalizedSong })
-      showSuccessToast(`Added "${song.title}" to favorites`)
-    }
-  }
-
-  // Guarded actions
-  const guardedPlaySong = guardPlayAction(playSongCore, {
-    errorMessage: 'You must be signed in to play music.',
-    authMode: 'signin'
-  })
-
-  const guardedToggleFavorite = guardFavoriteAction(toggleFavoriteCore, {
-    errorMessage: 'You must be signed in to add favorites.',
-    authMode: 'signin'
-  })
-
-  // Event handlers
-  const handleCardClick = () => {
+    
     if (!isEditMode) {
+      console.log('SongCard clicked:', song.title) // Debug log
       guardedPlaySong()
     }
   }
 
   const handlePlayPause = (e) => {
     e.stopPropagation()
+    console.log('Play/Pause clicked:', song.title) // Debug log
     guardedPlaySong()
   }
 
@@ -179,102 +66,11 @@ export default function SongCard({
     setShowMenu(!showMenu)
   }
 
-  const handleMenuOption = (action, e) => {
-    e.stopPropagation()
-    setShowMenu(false)
-
-    const guardedAddToQueueAction = createGuardedAction(() => {
-      try {
-        addToQueue(normalizedSong)
-        showSuccessToast(`"${song.title}" added to queue`)
-      } catch (error) {
-        showErrorToast('Failed to add song to queue')
-      }
-    }, {
-      errorMessage: 'You must be signed in to add songs to queue.',
-      authMode: 'signin'
-    })
-
-    const guardedPlayNextAction = createGuardedAction(() => {
-      // Add to queue at the next position instead of at the end
-      const currentIndex = state.queueIndex
-      if (currentIndex >= 0 && currentIndex < state.queue.length - 1) {
-        const newQueue = [...state.queue]
-        newQueue.splice(currentIndex + 1, 0, normalizedSong)
-        dispatch({ type: "SET_QUEUE", payload: newQueue })
-        showSuccessToast(`"${song.title}" will play next`)
-      } else {
-        addToQueue(normalizedSong)
-        showSuccessToast(`"${song.title}" added to queue`)
-      }
-    }, {
-      errorMessage: 'You must be signed in to manage queue.',
-      authMode: 'signin'
-    })
-
-    const guardedPlaylistAction = createGuardedAction(() => {
-      console.log('Add to playlist:', song.title)
-      // This would open a playlist selection modal
-      showSuccessToast('Playlist selection coming soon!')
-    }, {
-      errorMessage: 'You must be signed in to manage playlists.',
-      authMode: 'signin'
-    })
-
-    switch (action) {
-      case "queue":
-        guardedAddToQueueAction()
-        break
-      case "play-next":
-        guardedPlayNextAction()
-        break
-      case "playlist":
-        guardedPlaylistAction()
-        break
-      case "delete":
-        if (isAuthenticated && isUploaded) {
-          setShowDeleteConfirm(true)
-        }
-        break
-      default:
-        break
-    }
-  }
-
   const handleEditClick = (e) => {
     e.stopPropagation()
     if (onEditClick) {
       onEditClick(song)
     }
-  }
-
-  const confirmDelete = () => {
-    if (isCurrentSong) {
-      dispatch({ type: "SET_CURRENT_SONG", payload: null })
-      dispatch({ type: "SET_PLAYING", payload: false })
-    }
-
-    dispatch({ type: "REMOVE_UPLOAD", payload: songId })
-
-    if (isFavorite) {
-      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: songId })
-    }
-
-    // Remove from queue if present
-    if (isInQueue) {
-      const queueIndex = state.queue.findIndex(queueSong => (queueSong.id || queueSong._id) === songId)
-      if (queueIndex !== -1) {
-        dispatch({ type: "REMOVE_FROM_QUEUE", payload: queueIndex })
-      }
-    }
-
-    const audioUrl = song.url || song.audioUrl
-    if (audioUrl && audioUrl.startsWith("blob:")) {
-      URL.revokeObjectURL(audioUrl)
-    }
-
-    showSuccessToast(`"${song.title}" deleted successfully`)
-    setShowDeleteConfirm(false)
   }
 
   // Display properties
@@ -288,226 +84,55 @@ export default function SongCard({
   return (
     <>
       <div
-        className={`bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] border border-gray-100 dark:border-gray-700 group ${!isEditMode ? 'cursor-pointer' : ''
-          } ${isCurrentSong ? 'ring-2 ring-purple-500 ring-opacity-50' : ''}`}
+        className={`bg-white dark:bg-gray-800 rounded-lg p-2 sm:p-3 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-[1.02] border border-gray-100 dark:border-gray-700 group ${
+          !isEditMode ? 'cursor-pointer' : ''
+        } ${isCurrentSong ? 'ring-2 ring-purple-500 ring-opacity-50' : ''}`}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         onClick={handleCardClick}
         title={!isEditMode ? (isAuthenticated ? (isPlaying ? "Pause" : "Play") : "Sign in to play music") : undefined}
       >
-        <div className="relative mb-2 sm:mb-3">
-          {/* Status badges */}
-          <div className="absolute top-1 sm:top-2 left-1 sm:left-2 flex flex-col gap-1 z-10">
-            {isUploaded && (
-              <div className="bg-green-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium">
-                Uploaded
-              </div>
-            )}
-            {displayGenre && !isUploaded && (
-              <div className="bg-purple-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium">
-                {displayGenre}
-              </div>
-            )}
-          </div>
+        <SongCover
+          displayCover={displayCover}
+          displayTitle={displayTitle}
+          isUploaded={isUploaded}
+          displayGenre={displayGenre}
+          isInQueue={isInQueue}
+          isCurrentSong={isCurrentSong}
+          isEditMode={isEditMode}
+          isHovered={isHovered}
+          isPlaying={isPlaying}
+          isAuthenticated={isAuthenticated}
+          isFavorite={isFavorite}
+          onEditClick={handleEditClick}
+          onPlayPause={handlePlayPause}
+          onFavorite={handleFavorite}
+        />
 
-          {/* Queue indicator - Fixed positioning */}
-          {isInQueue && !isCurrentSong && (
-            <div className="absolute top-1 sm:top-2 right-1 sm:right-2 bg-blue-500 text-white text-[9px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-full font-medium z-10 flex items-center">
-              <ListMusic className="w-2 h-2 sm:w-2.5 sm:h-2.5" />
-            </div>
-          )}
-
-          <img
-            src={displayCover}
-            alt={`${displayTitle} cover`}
-            className="w-full aspect-square object-cover rounded-md sm:rounded-lg"
-            onError={(e) => {
-              e.target.src = "https://placehold.co/200x200/EFEFEF/AAAAAA?text=Song+Cover"
-            }}
-          />
-
-          {/* Edit mode overlay */}
-          {isEditMode && (
-            <div className="absolute inset-0 bg-black bg-opacity-40 rounded-md sm:rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
-              <button
-                onClick={handleEditClick}
-                className="bg-purple-500 hover:bg-purple-600 text-white p-2 sm:p-2.5 rounded-full shadow-lg transition-colors"
-                title="Edit song"
-              >
-                <Edit2 className="w-3 h-3 sm:w-4 sm:h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Play controls overlay */}
-          {!isEditMode && (
-            <div
-              className={`absolute inset-0 bg-black bg-opacity-40 rounded-md sm:rounded-lg flex items-center justify-center transition-opacity duration-200 ${isHovered || isPlaying ? "opacity-100" : "opacity-0"
-                }`}
-            >
-              <button
-                onClick={handlePlayPause}
-                className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-lg ${isAuthenticated
-                  ? "bg-white text-gray-900"
-                  : "bg-purple-500 text-white hover:bg-purple-600"
-                  }`}
-                title={isAuthenticated ? (isPlaying ? "Pause" : "Play") : "Sign in to play music"}
-              >
-                {isAuthenticated && isPlaying ? (
-                  <Pause className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                ) : (
-                  <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5 ml-0.5" />
-                )}
-              </button>
-            </div>
-          )}
-
-          {/* Favorite button - Always in bottom right */}
-          {!isEditMode && (
-            <button
-              onClick={handleFavorite}
-              className={`absolute bottom-1 sm:bottom-2 right-1 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all ${!isAuthenticated
-                ? "bg-gray-500 bg-opacity-70 text-gray-300 hover:bg-purple-500 hover:text-white hover:bg-opacity-90"
-                : isFavorite
-                  ? "bg-red-500 text-white hover:bg-red-600"
-                  : "bg-black bg-opacity-50 text-white hover:bg-opacity-70"
-                }`}
-              title={!isAuthenticated ? "Sign in to add to favorites" : (isFavorite ? "Remove from favorites" : "Add to favorites")}
-            >
-              <Heart className={`w-2 h-2 sm:w-2.5 sm:h-2.5 ${isFavorite && isAuthenticated ? "fill-current" : ""}`} />
-            </button>
-          )}
-        </div>
-
-        {/* Song info */}
-        <div className="space-y-0.5 sm:space-y-1">
-          <h3 className={`font-semibold text-xs sm:text-sm truncate leading-tight ${isCurrentSong ? 'text-purple-600 dark:text-purple-400' : ''}`} title={displayTitle}>
-            {displayTitle}
-          </h3>
-          <p
-            className="text-gray-600 dark:text-gray-400 text-[10px] sm:text-xs truncate leading-tight"
-            title={rawArtist}
-          >
-            {displayArtist}
-          </p>
-          <div className="flex items-center justify-between pt-0.5">
-            <span className="text-gray-500 dark:text-gray-500 text-[9px] sm:text-xs font-medium bg-gray-100 dark:bg-gray-700 px-1 sm:px-1.5 py-0.5 rounded-full">
-              {displayDuration}
-            </span>
-
-            {/* More options menu */}
-            {!isEditMode && (
-              <div className="relative" ref={menuRef}>
-                <button
-                  onClick={handleMenuToggle}
-                  className={`p-0.5 sm:p-1 rounded-full transition-colors ${isAuthenticated
-                    ? "hover:bg-gray-100 dark:hover:bg-gray-700"
-                    : "hover:bg-purple-100 dark:hover:bg-purple-900/20 hover:text-purple-600 dark:hover:text-purple-400"
-                    }`}
-                  title={isAuthenticated ? "More options" : "Sign in for more options"}
-                >
-                  <MoreHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-                </button>
-
-                {showMenu && (
-                  <div className="absolute bottom-0 right-0 mb-8 w-36 sm:w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 py-1 z-20">
-                    {isAuthenticated ? (
-                      <>
-                        <button
-                          onClick={(e) => handleMenuOption("queue", e)}
-                          disabled={isInQueue}
-                          className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center space-x-2 ${isInQueue 
-                            ? "text-gray-400 cursor-not-allowed"
-                            : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                          }`}
-                        >
-                          <Plus className="w-3 h-3" />
-                          <span>{isInQueue ? "In Queue" : "Add to Queue"}</span>
-                        </button>
-
-                        <button
-                          onClick={(e) => handleMenuOption("play-next", e)}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
-                        >
-                          <PlayCircle className="w-3 h-3" />
-                          <span>Play Next</span>
-                        </button>
-
-                        <hr className="my-1 border-gray-200 dark:border-gray-700" />
-
-                        <button
-                          onClick={(e) => handleMenuOption("playlist", e)}
-                          className="w-full text-left px-3 py-2 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
-                        >
-                          <Music className="w-3 h-3" />
-                          <span>Add to Playlist</span>
-                        </button>
-
-                        {isUploaded && (
-                          <>
-                            <hr className="my-1 border-gray-200 dark:border-gray-700" />
-                            <button
-                              onClick={(e) => handleMenuOption("delete", e)}
-                              className="w-full text-left px-3 py-2 text-xs hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 transition-colors flex items-center space-x-2"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                              <span>Delete</span>
-                            </button>
-                          </>
-                        )}
-                      </>
-                    ) : (
-                      <div className="px-3 py-2">
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center mb-2">
-                          Sign in to access menu options
-                        </p>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setShowMenu(false)
-                            if (onAuthRequired) {
-                              onAuthRequired('signin')
-                            }
-                          }}
-                          className="w-full text-center px-2 py-1 text-[10px] bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors"
-                        >
-                          Sign In
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <SongInfo
+          displayTitle={displayTitle}
+          displayArtist={displayArtist}
+          rawArtist={rawArtist}
+          displayDuration={displayDuration}
+          isCurrentSong={isCurrentSong}
+          isEditMode={isEditMode}
+          isAuthenticated={isAuthenticated}
+          showMenu={showMenu}
+          menuRef={menuRef}
+          onMenuToggle={handleMenuToggle}
+          onMenuOption={handleMenuOption}
+          onAuthRequired={onAuthRequired}
+          isInQueue={isInQueue}
+          isUploaded={isUploaded}
+        />
       </div>
 
-      {/* Delete confirmation modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 max-w-xs sm:max-w-sm w-full shadow-2xl">
-            <h3 className="text-base sm:text-lg font-bold mb-2 sm:mb-3 text-gray-900 dark:text-white">Delete Song</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4 sm:mb-6 text-xs sm:text-sm">
-              Are you sure you want to delete "{displayTitle}"? This action cannot be undone and will remove it from all playlists and queue.
-            </p>
-            <div className="flex space-x-2 sm:space-x-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 px-3 sm:px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-xs sm:text-sm text-gray-700 dark:text-gray-300"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 px-3 sm:px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs sm:text-sm"
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmModal
+        show={showDeleteConfirm}
+        songTitle={displayTitle}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </>
   )
 }

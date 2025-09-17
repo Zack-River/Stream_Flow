@@ -1,63 +1,173 @@
-import { useState, useRef, useEffect } from "react"
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Shuffle, Repeat, Repeat1, Heart, PanelRightOpen } from "lucide-react"
-import { useMusic } from "../../context/MusicContext"
-import { formatTime, parseTime } from "../../utils/audioUtils"
+import React, { useCallback, useEffect } from 'react'
+import { useMusic } from '../../context/MusicContext'
+import { useAudioPlayer } from '../../hooks/audioHooks'
+import { formatTime } from '../../utils/audioUtils'
+import PlayerControls from './PlayerControls'
+import SeekBar from './SeekBar'
+import SongInfo from './SongInfo'
+import VolumeControl from './VolumeControl'
+import RightSidebarToggle from './RightSidebarToggle'
 
 export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }) {
   const { state, dispatch, playNext, playPrevious, toggleShuffle, toggleRepeat, hasNext, hasPrevious } = useMusic()
-  const audioRef = useRef(null)
-  const [showVolumeSlider, setShowVolumeSlider] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(false)
-  const [audioLoaded, setAudioLoaded] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-  const animationRef = useRef(null) // For manual time updates
-  const modalRef = useRef(null)
-  const volumeButtonRef = useRef(null)
-  const isSeekingRef = useRef(false) // Track seeking state
-
   const { currentSong, isPlaying, volume, currentTime, duration, isShuffled, repeatMode, isSkipping } = state
-  
-  // Handle both song ID formats
-  const currentSongId = currentSong?.id || currentSong?._id
-  const isFavorite = currentSong && state.favorites.some((fav) => (fav.id || fav._id) === currentSongId)
 
-  // Detect mobile screen size and dark mode
+  // Handle audio events
+  const handleTimeUpdate = useCallback((time, dur) => {
+    dispatch({ type: 'SET_TIME', payload: time })
+    if (dur && dur !== Infinity && !isNaN(dur)) {
+      dispatch({ type: 'SET_DURATION', payload: dur })
+    }
+  }, [dispatch])
+
+  const handleEnded = useCallback(() => {
+    console.log('🎵 Audio ended in player')
+    dispatch({ type: 'SET_SKIPPING', payload: false })
+    
+    if (repeatMode === 'one') {
+      console.log('🔁 Repeating current song')
+      dispatch({ type: 'SET_TIME', payload: 0 })
+      setTimeout(() => {
+        dispatch({ type: 'SET_PLAYING', payload: true })
+      }, 50)
+    } else if (hasNext()) {
+      console.log('⏭️ Playing next song')
+      setTimeout(() => playNext(), 100)
+    } else {
+      console.log('⏹️ No next song, stopping')
+      dispatch({ type: 'SET_PLAYING', payload: false })
+      dispatch({ type: 'SET_TIME', payload: 0 })
+    }
+  }, [dispatch, repeatMode, hasNext, playNext])
+
+  const handleError = useCallback((error) => {
+    console.error('🚫 Audio player error:', error)
+    dispatch({ type: 'SET_PLAYING', payload: false })
+  }, [dispatch])
+
+  // Initialize audio player hook
+  const audioPlayer = useAudioPlayer(currentSong, volume, handleTimeUpdate, handleEnded, handleError)
+
+  // ENHANCED: Sync playing state with audio element
   useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 640) // sm breakpoint
+    const syncAudioState = async () => {
+      if (!currentSong) {
+        console.log('🎵 No current song, pausing audio')
+        audioPlayer.pause()
+        return
+      }
+
+      if (isPlaying) {
+        console.log('🎵 State says playing, starting audio for:', currentSong.title)
+        const success = await audioPlayer.play()
+        if (!success) {
+          console.error('🚫 Failed to start audio playback')
+          dispatch({ type: 'SET_PLAYING', payload: false })
+        }
+      } else {
+        console.log('🎵 State says paused, pausing audio')
+        audioPlayer.pause()
+      }
     }
 
-    const checkDarkMode = () => {
-      setIsDarkMode(document.documentElement.classList.contains('dark'))
+    syncAudioState()
+  }, [isPlaying, currentSong, audioPlayer, dispatch])
+
+  // Audio controls
+  const handlePlayPause = useCallback(async () => {
+    if (!currentSong) {
+      console.log('🚫 No current song to play')
+      return
     }
 
-    // Initial checks
-    checkDarkMode()
-    checkScreenSize()
+    console.log('🎵 AudioPlayer play/pause clicked', { isPlaying, currentSong: currentSong.title })
 
-    // Set up observers
-    window.addEventListener('resize', checkScreenSize)
-
-    // Watch for dark mode changes
-    const observer = new MutationObserver(checkDarkMode)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class']
-    })
-
-    return () => {
-      window.removeEventListener('resize', checkScreenSize)
-      observer.disconnect()
+    if (isPlaying) {
+      audioPlayer.pause()
+      dispatch({ type: 'SET_PLAYING', payload: false })
+    } else {
+      const success = await audioPlayer.play()
+      if (success) {
+        dispatch({ type: 'SET_PLAYING', payload: true })
+      } else {
+        console.error('🚫 Failed to play audio')
+      }
     }
+  }, [currentSong, isPlaying, audioPlayer, dispatch])
+
+  const handleSeek = useCallback((time) => {
+    console.log('⏭️ Seeking to:', time)
+    audioPlayer.seek(time)
+    dispatch({ type: 'SET_TIME', payload: time })
+  }, [audioPlayer, dispatch])
+
+  const handleVolumeChange = useCallback((newVolume) => {
+    console.log('🔊 Volume change:', newVolume)
+    audioPlayer.setVolume(newVolume)
+    dispatch({ type: 'SET_VOLUME', payload: newVolume })
+  }, [audioPlayer, dispatch])
+
+  // Skip handlers
+  const handleSkipNext = useCallback(() => {
+    if (isSkipping || !hasNext()) return
+    console.log('⏭️ Skipping to next song')
+    audioPlayer.pause()
+    playNext()
+  }, [isSkipping, hasNext, audioPlayer, playNext])
+
+  const handleSkipPrevious = useCallback(() => {
+    if (isSkipping || !hasPrevious()) return
+    console.log('⏮️ Skipping to previous song')
+    audioPlayer.pause()
+    playPrevious()
+  }, [isSkipping, hasPrevious, audioPlayer, playPrevious])
+
+  // Favorite handler
+  const handleFavorite = useCallback(() => {
+    if (!currentSong) return
+    
+    const currentSongId = currentSong.id || currentSong._id
+    const isFavorite = state.favorites.some(fav => (fav.id || fav._id) === currentSongId)
+    
+    if (isFavorite) {
+      dispatch({ type: 'REMOVE_FROM_FAVORITES', payload: currentSongId })
+      console.log('💔 Removed from favorites:', currentSong.title)
+    } else {
+      dispatch({ type: 'ADD_TO_FAVORITES', payload: currentSong })
+      console.log('❤️ Added to favorites:', currentSong.title)
+    }
+  }, [currentSong, state.favorites, dispatch])
+
+  // Volume handlers
+  const handleMute = useCallback(() => {
+    const newVolume = volume > 0 ? 0 : 0.7
+    handleVolumeChange(newVolume)
+  }, [volume, handleVolumeChange])
+
+  // Volume control state
+  const [showVolumeSlider, setShowVolumeSlider] = React.useState(false)
+  const [isMobile, setIsMobile] = React.useState(false)
+  const volumeButtonRef = React.useRef(null)
+  const volumeModalRef = React.useRef(null)
+
+  // Detect mobile
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Handle click outside volume dropdown
-  useEffect(() => {
+  // Handle volume dropdown clicks
+  React.useEffect(() => {
     const handleClickOutside = (event) => {
-      // Don't close if clicking on the modal itself or the volume button
-      if (modalRef.current && !modalRef.current.contains(event.target) &&
-          volumeButtonRef.current && !volumeButtonRef.current.contains(event.target)) {
+      if (
+        volumeModalRef.current && !volumeModalRef.current.contains(event.target) &&
+        volumeButtonRef.current && !volumeButtonRef.current.contains(event.target)
+      ) {
         setShowVolumeSlider(false)
       }
     }
@@ -73,679 +183,68 @@ export default function AudioPlayer({ onToggleRightSidebar, isRightSidebarOpen }
     }
   }, [showVolumeSlider])
 
-  // Reset state when song changes
-  useEffect(() => {
-    dispatch({ type: "SET_TIME", payload: 0 })
-    dispatch({ type: "SET_DURATION", payload: 0 })
-    setAudioLoaded(false)
-    setIsDragging(false) // Reset dragging state
-    isSeekingRef.current = false // Reset seeking state
-
-    if (audioRef.current && currentSong) {
-      const audio = audioRef.current
-      
-      // Pause current audio first
-      audio.pause()
-      audio.currentTime = 0 // Reset to beginning
-      
-      // Handle both URL formats
-      const audioUrl = currentSong.url || currentSong.audioUrl
-      
-      // Only change src if it's different
-      if (audio.src !== audioUrl) {
-        audio.src = audioUrl
-        audio.load()
-      }
-      
-      // Apply volume immediately after loading new song
-      audio.volume = volume
-    }
-
-    // Cancel any existing animation
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current)
-    }
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [currentSongId, dispatch, volume]) // Added volume back to dependencies
-
-  // Manual time updates for problematic audio sources
-  const updateTimeManually = () => {
-    if (!audioRef.current || isDragging || isSeekingRef.current) return
-    
-    const currentAudioTime = audioRef.current.currentTime
-    // Only update if there's a meaningful difference to avoid unnecessary re-renders
-    if (Math.abs(currentAudioTime - currentTime) > 0.1) {
-      dispatch({ type: "SET_TIME", payload: currentAudioTime })
-    }
-    
-    if (isPlaying && !isDragging && !isSeekingRef.current) {
-      animationRef.current = requestAnimationFrame(updateTimeManually)
-    }
-  }
-
-  // Audio event handlers
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-
-    const handleTimeUpdate = () => {
-      // Only update time if we're not dragging or seeking
-      if (!isDragging && !isSeekingRef.current) {
-        dispatch({ type: "SET_TIME", payload: audio.currentTime })
-      }
-    }
-
-    const handleLoadedData = () => {
-      setAudioLoaded(true)
-      // Apply volume when audio data is loaded
-      audio.volume = volume
-      
-      if (audio.readyState >= 2) {
-        const validDuration = audio.duration !== Infinity ? audio.duration : 0
-        dispatch({ type: "SET_DURATION", payload: validDuration })
-      }
-    }
-
-    const handleDurationChange = () => {
-      if (audio.duration !== Infinity && !isNaN(audio.duration)) {
-        dispatch({ type: "SET_DURATION", payload: audio.duration })
-      }
-    }
-
-    const handleCanPlay = () => {
-      setAudioLoaded(true)
-      // Apply volume when audio can play
-      audio.volume = volume
-      
-      if (audio.duration !== Infinity && !isNaN(audio.duration)) {
-        dispatch({ type: "SET_DURATION", payload: audio.duration })
-      }
-    }
-
-    const handleError = (e) => {
-      console.error("Audio error:", e)
-      dispatch({ type: "SET_PLAYING", payload: false })
-      setAudioLoaded(false)
-    }
-
-    const handleEnded = () => {
-      // Clear any existing skipping state first
-      dispatch({ type: "SET_SKIPPING", payload: false })
-      
-      if (repeatMode === 'one') {
-        // Repeat the current song
-        audio.currentTime = 0
-        dispatch({ type: "SET_TIME", payload: 0 })
-        // Use a small delay to ensure state is updated
-        setTimeout(() => {
-          audio.play().catch(e => console.error("Repeat playback error:", e))
-        }, 50)
-      } else if (hasNext()) {
-        // Auto-play next song
-        setTimeout(() => {
-          playNext()
-        }, 100)
-      } else {
-        // No next song available - stop playing
-        dispatch({ type: "SET_PLAYING", payload: false })
-        dispatch({ type: "SET_TIME", payload: 0 })
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current)
-        }
-      }
-    }
-
-    // Add seeking event handlers
-    const handleSeeking = () => {
-      isSeekingRef.current = true
-    }
-
-    const handleSeeked = () => {
-      isSeekingRef.current = false
-      // Update our state to match the actual audio time
-      dispatch({ type: "SET_TIME", payload: audio.currentTime })
-      
-      // Reset skipping state after seek completes
-      if (isSkipping) {
-        dispatch({ type: "SET_SKIPPING", payload: false })
-      }
-    }
-
-    // Add volume change handler to ensure consistency
-    const handleVolumeChange = () => {
-      // Sync audio volume with our state if they get out of sync
-      if (Math.abs(audio.volume - volume) > 0.01) {
-        audio.volume = volume
-      }
-    }
-
-    audio.addEventListener("timeupdate", handleTimeUpdate)
-    audio.addEventListener("loadeddata", handleLoadedData)
-    audio.addEventListener("durationchange", handleDurationChange)
-    audio.addEventListener("canplay", handleCanPlay)
-    audio.addEventListener("ended", handleEnded)
-    audio.addEventListener("error", handleError)
-    audio.addEventListener("seeking", handleSeeking)
-    audio.addEventListener("seeked", handleSeeked)
-    audio.addEventListener("volumechange", handleVolumeChange)
-
-    return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate)
-      audio.removeEventListener("loadeddata", handleLoadedData)
-      audio.removeEventListener("durationchange", handleDurationChange)
-      audio.removeEventListener("canplay", handleCanPlay)
-      audio.removeEventListener("ended", handleEnded)
-      audio.removeEventListener("error", handleError)
-      audio.removeEventListener("seeking", handleSeeking)
-      audio.removeEventListener("seeked", handleSeeked)
-      audio.removeEventListener("volumechange", handleVolumeChange)
-    }
-  }, [dispatch, isDragging, repeatMode, hasNext, playNext, isSkipping]) // Added dependencies
-
-  // Play/pause control with proper synchronization
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || !currentSong) return
-
-    const playAudio = async () => {
-      try {
-        // Ensure volume is set before playing
-        audio.volume = volume
-
-        // Start manual time updates as fallback
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current)
-        }
-        animationRef.current = requestAnimationFrame(updateTimeManually)
-
-        // Ensure audio is properly loaded before playing
-        if (audio.readyState < 3) { // Less than HAVE_FUTURE_DATA
-          audio.load()
-          audio.volume = volume
-          
-          // Wait for audio to be ready
-          await new Promise((resolve, reject) => {
-            let attempts = 0
-            const maxAttempts = 50 // 5 seconds max wait
-            
-            const checkReady = () => {
-              attempts++
-              if (audio.readyState >= 3) { // HAVE_FUTURE_DATA
-                audio.volume = volume
-                resolve()
-              } else if (attempts >= maxAttempts) {
-                reject(new Error('Audio failed to load'))
-              } else {
-                setTimeout(checkReady, 100)
-              }
-            }
-            checkReady()
-          })
-        }
-
-        // Only play if we're still supposed to be playing (state might have changed)
-        if (isPlaying) {
-          await audio.play()
-
-          // Set duration if available
-          if (audio.duration !== Infinity && !isNaN(audio.duration)) {
-            dispatch({ type: "SET_DURATION", payload: audio.duration })
-          }
-          
-          // Final volume check
-          audio.volume = volume
-        }
-      } catch (error) {
-        console.error("Playback error:", error)
-        dispatch({ type: "SET_PLAYING", payload: false })
-
-        if (error.name === "NotSupportedError" || error.name === "NotAllowedError") {
-          console.log("Retrying playback...")
-          setTimeout(() => {
-            if (isPlaying) { // Only retry if still supposed to be playing
-              audio.load()
-              audio.volume = volume
-              audio.play().catch(e => {
-                console.error("Retry failed:", e)
-                dispatch({ type: "SET_PLAYING", payload: false })
-              })
-            }
-          }, 300)
-        }
-      }
-    }
-
-    const pauseAudio = () => {
-      try {
-        if (!audio.paused) {
-          audio.pause()
-        }
-        if (animationRef.current) {
-          cancelAnimationFrame(animationRef.current)
-        }
-      } catch (error) {
-        console.error("Pause error:", error)
-      }
-    }
-
-    if (isPlaying) {
-      playAudio()
-    } else {
-      pauseAudio()
-    }
-
-    return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current)
-      }
-    }
-  }, [isPlaying, currentSongId, dispatch, volume]) // Include currentSongId to ensure proper sync
-
-  // Volume control - Enhanced to handle both user preference and immediate application
-  useEffect(() => {
-    const audio = audioRef.current
-    if (audio) {
-      audio.volume = volume
-      
-      // For extra safety, set a small delay for stubborn audio sources
-      setTimeout(() => {
-        if (audio.volume !== volume) {
-          audio.volume = volume
-        }
-      }, 100)
-    }
-  }, [volume])
-
-  const handlePlayPause = () => {
-    dispatch({ type: "TOGGLE_PLAY" })
-  }
-
-  const handleVolumeChange = (e) => {
-    const newVolume = Number.parseFloat(e.target.value)
-    dispatch({ type: "SET_VOLUME", payload: newVolume })
-    
-    // Apply immediately to audio element
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume
-    }
-  }
-
-  const toggleMute = () => {
-    const newVolume = volume > 0 ? 0 : 0.7
-    dispatch({ type: "SET_VOLUME", payload: newVolume })
-    
-    // Apply immediately to audio element
-    if (audioRef.current) {
-      audioRef.current.volume = newVolume
-    }
-  }
-
-  const handleVolumeClick = () => {
-    if (isMobile) {
-      setShowVolumeSlider(!showVolumeSlider)
-    } else {
-      toggleMute()
-    }
-  }
-
-  // Enhanced skip handlers with proper state management
-  const handleSkipNext = () => {
-    if (isSkipping) return // Prevent multiple clicks
-    
-    if (hasNext()) {
-      // Pause current audio immediately to prevent overlap
-      if (audioRef.current && !audioRef.current.paused) {
-        audioRef.current.pause()
-      }
-      playNext()
-    } else {
-      console.log("No next song available")
-    }
-  }
-
-  const handleSkipPrevious = () => {
-    if (isSkipping) return // Prevent multiple clicks
-    
-    if (hasPrevious()) {
-      // Pause current audio immediately to prevent overlap
-      if (audioRef.current && !audioRef.current.paused) {
-        audioRef.current.pause()
-      }
-      playPrevious()
-    } else {
-      console.log("No previous song available")
-    }
-  }
-
-  // Enhanced shuffle handler
-  const handleShuffle = () => {
-    toggleShuffle()
-  }
-
-  // Enhanced repeat handler - cycles through off -> all -> one -> off
-  const handleRepeat = () => {
-    toggleRepeat()
-  }
-
-  const handleFavorite = () => {
-    if (!currentSong) return
-
-    if (isFavorite) {
-      dispatch({ type: "REMOVE_FROM_FAVORITES", payload: currentSongId })
-    } else {
-      dispatch({ type: "ADD_TO_FAVORITES", payload: currentSong })
-    }
-  }
-
-  // Fixed seek handlers
-  const handleSeekStart = (e) => {
-    setIsDragging(true)
-    isSeekingRef.current = true
-    
-    // Cancel any existing animation
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current)
-    }
-  }
-
-  const handleSeekChange = (e) => {
-    if (!duration) return
-    
-    const newTime = Number.parseFloat(e.target.value)
-    // Clamp the value to valid range
-    const clampedTime = Math.max(0, Math.min(newTime, duration))
-    
-    // Update UI immediately for responsiveness
-    dispatch({ type: "SET_TIME", payload: clampedTime })
-  }
-
-  const handleSeekEnd = (e) => {
-    if (!duration) return
-    
-    const newTime = Number.parseFloat(e.target.value)
-    const clampedTime = Math.max(0, Math.min(newTime, duration))
-    
-    const audio = audioRef.current
-    if (audio) {
-      try {
-        audio.currentTime = clampedTime
-        dispatch({ type: "SET_TIME", payload: clampedTime })
-      } catch (error) {
-        console.error("Seek error:", error)
-      }
-    }
-    
-    // Reset dragging state
-    setIsDragging(false)
-    isSeekingRef.current = false
-    
-    // Restart manual updates if playing
-    if (isPlaying) {
-      animationRef.current = requestAnimationFrame(updateTimeManually)
-    }
-  }
-
-  // Handle touch events for mobile
-  const handleTouchEnd = (e) => {
-    handleSeekEnd(e)
-  }
-
-  const progressPercentage = duration && duration > 0 ?
-    Math.max(0, Math.min(100, (currentTime / duration) * 100)) : 0
-
-  // Get repeat button icon based on mode
-  const getRepeatIcon = () => {
-    switch (repeatMode) {
-      case 'one':
-        return <Repeat1 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-      case 'all':
-      case 'off':
-      default:
-        return <Repeat className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-    }
-  }
-
-  // Get repeat button style based on mode (all purple as requested)
-  const getRepeatButtonStyle = () => {
-    switch (repeatMode) {
-      case 'one':
-      case 'all':
-        return "text-purple-500 hover:text-purple-600 bg-purple-50 dark:bg-purple-900/20"
-      case 'off':
-      default:
-        return "hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-    }
-  }
-
   if (!currentSong) {
     return null
   }
 
-  // Get display values with proper fallbacks
-  const displayTitle = currentSong.title || "Unknown Title"
-  const displayArtist = currentSong.artist || currentSong.singer || "Unknown Artist"
-  const displayCover = currentSong.cover || currentSong.coverImageUrl || "https://placehold.co/48x48/EFEFEF/AAAAAA?text=Cover"
-
   return (
     <>
-      {/* Audio Player Container - no longer needs positioning classes since parent handles it */}
       <div className="bg-white/95 dark:bg-gray-800/95 border-t border-gray-200/50 dark:border-gray-700/50 px-3 py-2 sm:px-4 lg:px-6 backdrop-blur-lg shadow-2xl w-full">
-        <audio
-          key={currentSongId}
-          ref={audioRef}
-          src={currentSong.url || currentSong.audioUrl}
-          preload="auto"
-        />
-
-        {/* Rest of the audio player content */}
         <div className="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
           
-          {/* Song Info + Heart */}
-          <div className="flex items-center justify-between sm:justify-start sm:space-x-3 sm:w-50 sm:min-w-0">
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              <div className="relative flex-shrink-0">
-                <img
-                  src={displayCover}
-                  alt={displayTitle}
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover shadow-md"
-                  onError={(e) => {
-                    e.target.src = "https://placehold.co/48x48/EFEFEF/AAAAAA?text=Cover"
-                  }}
-                />
-                {currentSong.isUploaded && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="font-semibold text-xs sm:text-sm truncate" title={displayTitle}>{displayTitle}</h4>
-                <p className="text-gray-600 dark:text-gray-400 text-xs truncate" title={displayArtist}>{displayArtist}</p>
-              </div>
-            </div>
-            
-            {/* Heart button */}
-            <button
-              onClick={handleFavorite}
-              className={`p-2 rounded-full transition-all duration-200 flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center ${isFavorite
-                ? "text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20"
-                : "text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
-            >
-              <Heart className={`w-4 h-4 ${isFavorite ? "fill-current" : ""}`} />
-            </button>
-          </div>
+          {/* Song Info + Favorite */}
+          <SongInfo 
+            currentSong={currentSong}
+            isFavorite={state.favorites.some(fav => (fav.id || fav._id) === (currentSong.id || currentSong._id))}
+            onFavorite={handleFavorite}
+          />
 
-          {/* Controls section */}
+          {/* Controls Section */}
           <div className="flex flex-col space-y-2 sm:space-y-1 flex-1 sm:max-w-md">
-            {/* Control buttons */}
-            <div className="flex items-center justify-center space-x-2 sm:space-x-4">
-              <button 
-                onClick={handleShuffle}
-                disabled={isSkipping}
-                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
-                  isShuffled 
-                    ? "text-purple-500 hover:text-purple-600 bg-purple-50 dark:bg-purple-900/20" 
-                    : "hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
-              >
-                <Shuffle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              </button>
-              
-              <button 
-                onClick={handleSkipPrevious}
-                disabled={isSkipping || !hasPrevious()}
-                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <SkipBack className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-              
-              <button
-                onClick={handlePlayPause}
-                disabled={isSkipping}
-                className="w-10 h-10 bg-purple-600 hover:bg-purple-700 text-white rounded-full flex items-center justify-center transition-all duration-200 transform hover:scale-105 shadow-lg disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none"
-              >
-                {isPlaying ? <Pause className="w-4 h-4 sm:w-5 sm:h-5" /> : <Play className="w-4 h-4 sm:w-5 sm:h-5 ml-0.5" />}
-              </button>
-              
-              <button 
-                onClick={handleSkipNext}
-                disabled={isSkipping || !hasNext()}
-                className="p-1.5 sm:p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <SkipForward className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
-              
-              <button 
-                onClick={handleRepeat}
-                disabled={isSkipping}
-                className={`p-1.5 sm:p-2 rounded-full transition-all duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${getRepeatButtonStyle()}`}
-                title={`Repeat: ${repeatMode === 'off' ? 'Off' : repeatMode === 'all' ? 'All' : 'One'}`}
-              >
-                {getRepeatIcon()}
-              </button>
-            </div>
+            <PlayerControls
+              isPlaying={isPlaying}
+              isShuffled={isShuffled}
+              repeatMode={repeatMode}
+              isSkipping={isSkipping}
+              hasNext={hasNext}
+              hasPrevious={hasPrevious}
+              onPlayPause={handlePlayPause}
+              onSkipNext={handleSkipNext}
+              onSkipPrevious={handleSkipPrevious}
+              onShuffle={toggleShuffle}
+              onRepeat={toggleRepeat}
+            />
 
-            {/* Seekbar */}
-            <div className="flex items-center space-x-2 sm:space-x-3 w-full">
-              <span className="text-xs text-gray-500 font-mono w-8 sm:w-10 text-left flex-shrink-0">
-                {formatTime(currentTime)}
-              </span>
-
-              <div className="flex-1 relative">
-                <input
-                  type="range"
-                  min="0"
-                  max={duration || 100}
-                  value={currentTime || 0}
-                  onMouseDown={handleSeekStart}
-                  onTouchStart={handleSeekStart}
-                  onChange={handleSeekChange}
-                  onMouseUp={handleSeekEnd}
-                  onTouchEnd={handleTouchEnd}
-                  disabled={isSkipping}
-                  className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer select-none disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{
-                    background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${progressPercentage}%, ${isDarkMode ? "#374151" : "#e5e7eb"
-                      } ${progressPercentage}%, ${isDarkMode ? "#374151" : "#e5e7eb"
-                      } 100%)`,
-                  }}
-                />
-              </div>
-
-              <span className="text-xs text-gray-500 font-mono w-8 sm:w-10 text-right flex-shrink-0">
-                {formatTime(duration)}
-              </span>
-            </div>
+            <SeekBar
+              currentTime={currentTime}
+              duration={duration}
+              onSeek={handleSeek}
+              isSkipping={isSkipping}
+            />
           </div>
 
-          {/* Right controls */}
+          {/* Right Controls */}
           <div className="hidden sm:flex items-center space-x-2 w-32 lg:w-40 justify-end">
-            <div className="flex items-center space-x-1 lg:space-x-2 justify-end relative">
+            <RightSidebarToggle
+              isOpen={isRightSidebarOpen}
+              onToggle={onToggleRightSidebar}
+            />
 
-              {/* Toggle Right Sidebar Button */}
-              <button
-                onClick={onToggleRightSidebar}
-                className="hidden lg:block p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
-              >
-                <PanelRightOpen className={`w-4 h-4 transition-transform duration-300 ${isRightSidebarOpen ? "rotate-180" : "rotate-0"
-                  }`} />
-              </button>
-
-              {/* Volume Icon */}
-              <button
-                ref={volumeButtonRef}
-                onClick={handleVolumeClick}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors duration-200 min-w-[44px] min-h-[44px] flex items-center justify-center"
-              >
-                {volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              </button>
-
-              {/* Volume Slider */}
-              {!isMobile && (
-                <div className="hidden md:flex h-6 items-center">
-                  <input
-                    type="range"
-                    min="0"
-                    max="1"
-                    step="0.1"
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    className="w-16 lg:w-24 h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                    style={{
-                      background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${volume * 100}%, ${isDarkMode ? "#374151" : "#e5e7eb"
-                        } ${volume * 100}%, ${isDarkMode ? "#374151" : "#e5e7eb"} 100%)`,
-                    }}
-                  />
-                </div>
-              )}
-            </div>
+            <VolumeControl
+              volume={volume}
+              isMobile={isMobile}
+              showSlider={showVolumeSlider}
+              onVolumeChange={handleVolumeChange}
+              onMute={handleMute}
+              onToggleSlider={() => setShowVolumeSlider(!showVolumeSlider)}
+              refs={{
+                button: volumeButtonRef,
+                modal: volumeModalRef
+              }}
+            />
           </div>
-          
         </div>
-
       </div>
-
-      {/* Volume Dropdown - Update positioning for fixed player */}
-      {showVolumeSlider && isMobile && (
-        <div className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50">
-          <div
-            ref={modalRef}
-            className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 w-64"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-sm font-medium">Volume</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{Math.round(volume * 100)}%</span>
-            </div>
-
-            <div className="space-y-3">
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.01"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${volume * 100}%, ${isDarkMode ? "#374151" : "#e5e7eb"
-                    } ${volume * 100}%, ${isDarkMode ? "#374151" : "#e5e7eb"} 100%)`,
-                }}
-              />
-
-              <button
-                onClick={toggleMute}
-                className="w-full px-3 py-2 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-sm"
-              >
-                {volume === 0 ? 'Unmute' : 'Mute'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Loading/Skipping Indicator */}
       {isSkipping && (
